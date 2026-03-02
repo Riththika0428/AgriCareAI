@@ -1,6 +1,6 @@
 import User from '../models/User.model.js';
-import FarmerProfile from '../models/FarmerProfile.model.js';
-import ConsumerProfile from '../models/ConsumerProfile.model.js';
+// import FarmerProfile from '../models/FarmerProfile.model.js';
+// import ConsumerProfile from '../models/ConsumerProfile.model.js';
 import tokenService from '../services/token.service.js';
 import emailService from '../services/email.service.js';
 import crypto from 'crypto';
