@@ -22,7 +22,7 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 100,
   message: 'Too many requests from this IP, please try again later'
 });
 app.use('/api/auth', limiter);
@@ -46,4 +46,5 @@ app.use(errorHandler);
 // Start server
 app.listen(config.port, () => {
   console.log(`🚀 Server running on port ${config.port}`);
+  console.log(`🌐 Google OAuth URL: http://localhost:${config.port}/api/auth/google/url`);
 });

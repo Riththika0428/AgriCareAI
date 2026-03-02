@@ -3,6 +3,7 @@ import User from '../models/User.model.js';
 // import ConsumerProfile from '../models/ConsumerProfile.model.js';
 import tokenService from '../services/token.service.js';
 import emailService from '../services/email.service.js';
+import googleService from '../services/google.service.js';
 import crypto from 'crypto';
 
 // @desc    Register user
@@ -332,6 +333,222 @@ export const changePassword = async (req, res, next) => {
     res.json({
       success: true,
       message: 'Password changed successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Google OAuth URL
+// @route   GET /api/auth/google/url
+// @access  Public
+export const getGoogleAuthUrl = async (req, res, next) => {
+  try {
+    const url = googleService.getAuthUrl();
+    res.json({
+      success: true,
+      data: { url }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Google OAuth Callback
+// @route   GET /api/auth/google/callback
+// @access  Public
+export const googleCallback = async (req, res, next) => {
+  try {
+    const { code } = req.query;
+
+    if (!code) {
+      return res.status(400).json({
+        success: false,
+        message: 'Authorization code is required'
+      });
+    }
+
+    // Get tokens from Google
+    const tokens = await googleService.getTokensFromCode(code);
+    
+    // Get user info from Google
+    const googleUser = await googleService.getUserInfo(tokens.access_token);
+
+    // Find or create user
+    let user = await User.findOne({ email: googleUser.email });
+
+    if (!user) {
+      // Create new user
+      user = await User.create({
+        name: googleUser.name,
+        email: googleUser.email,
+        password: crypto.randomBytes(20).toString('hex'), // Random password
+        role: 'consumer', // Default role, can be changed later
+        isEmailVerified: googleUser.verified_email || true,
+        profileImage: googleUser.picture,
+        googleId: googleUser.id
+      });
+
+      // Create consumer profile
+      await ConsumerProfile.create({ user: user._id });
+
+      // Send welcome email
+      await emailService.sendWelcomeEmail(user);
+    } else {
+      // Update existing user with Google info
+      user.googleId = googleUser.id;
+      user.profileImage = user.profileImage || googleUser.picture;
+      user.isEmailVerified = user.isEmailVerified || googleUser.verified_email;
+      await user.save();
+    }
+
+    // Generate tokens
+    const { accessToken, refreshToken } = tokenService.generateTokens(
+      user._id,
+      user.role
+    );
+
+    // Save refresh token
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    // Remove sensitive data
+    user.password = undefined;
+    user.refreshToken = undefined;
+
+    // Redirect to frontend with tokens
+    const redirectUrl = `${process.env.FRONTEND_URL}/oauth-redirect?accessToken=${accessToken}&refreshToken=${refreshToken}&user=${encodeURIComponent(
+      JSON.stringify(user)
+    )}`;
+
+    res.redirect(redirectUrl);
+  } catch (error) {
+    console.error('Google callback error:', error);
+    res.redirect(`${process.env.FRONTEND_URL}/login?error=google_auth_failed`);
+  }
+};
+
+// @desc    Google OAuth Mobile/SPA (Token verification)
+// @route   POST /api/auth/google/mobile
+// @access  Public
+export const googleMobileAuth = async (req, res, next) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID token is required'
+      });
+    }
+
+    // Verify Google token
+    const googleUser = await googleService.verifyMobileToken(idToken);
+
+    // Find or create user
+    let user = await User.findOne({ email: googleUser.email });
+
+    if (!user) {
+      // Create new user
+      user = await User.create({
+        name: googleUser.name,
+        email: googleUser.email,
+        password: crypto.randomBytes(20).toString('hex'),
+        role: 'consumer',
+        isEmailVerified: googleUser.emailVerified,
+        profileImage: googleUser.picture,
+        googleId: googleUser.googleId
+      });
+
+      // Create consumer profile
+      await ConsumerProfile.create({ user: user._id });
+
+      // Send welcome email
+      await emailService.sendWelcomeEmail(user);
+    } else {
+      // Update existing user
+      user.googleId = googleUser.googleId;
+      user.profileImage = user.profileImage || googleUser.picture;
+      user.isEmailVerified = user.isEmailVerified || googleUser.emailVerified;
+      await user.save();
+    }
+
+    // Generate tokens
+    const { accessToken, refreshToken } = tokenService.generateTokens(
+      user._id,
+      user.role
+    );
+
+    // Save refresh token
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    // Remove sensitive data
+    user.password = undefined;
+    user.refreshToken = undefined;
+
+    res.json({
+      success: true,
+      message: 'Google authentication successful',
+      data: { user, accessToken, refreshToken }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Link Google account to existing user
+// @route   POST /api/auth/google/link
+// @access  Private
+export const linkGoogleAccount = async (req, res, next) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID token is required'
+      });
+    }
+
+    // Verify Google token
+    const googleUser = await googleService.verifyMobileToken(idToken);
+
+    // Check if Google account is already linked to another user
+    const existingUser = await User.findOne({ googleId: googleUser.googleId });
+    if (existingUser && existingUser._id.toString() !== req.user._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'This Google account is already linked to another user'
+      });
+    }
+
+    // Link Google account to current user
+    req.user.googleId = googleUser.googleId;
+    req.user.profileImage = req.user.profileImage || googleUser.picture;
+    req.user.isEmailVerified = req.user.isEmailVerified || googleUser.emailVerified;
+    await req.user.save();
+
+    res.json({
+      success: true,
+      message: 'Google account linked successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Unlink Google account
+// @route   POST /api/auth/google/unlink
+// @access  Private
+export const unlinkGoogleAccount = async (req, res, next) => {
+  try {
+    req.user.googleId = undefined;
+    await req.user.save();
+
+    res.json({
+      success: true,
+      message: 'Google account unlinked successfully'
     });
   } catch (error) {
     next(error);
