@@ -2,11 +2,16 @@ import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
 // Generate JWT
-const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
+const generateToken = () => {
+  return jwt.sign({}, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE,
   });
 };
+// const generateToken = (id, role) => {
+//   return jwt.sign({ id, role }, process.env.JWT_SECRET, {
+//     expiresIn: process.env.JWT_EXPIRE,
+//   });
+// };
 
 // REGISTER
 export const registerUser = async (req, res) => {
@@ -26,7 +31,8 @@ export const registerUser = async (req, res) => {
       role,
     });
 
-    const token = generateToken(user._id, user.role);
+    // const token = generateToken(user._id, user.role);
+      const token = generateToken(); 
 
     res.status(201).json({
       _id: user._id,
@@ -48,8 +54,8 @@ export const loginUser = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && (await user.matchPassword(password))) {
-      const token = generateToken(user._id, user.role);
-
+      const token = generateToken();
+      
       res.json({
         _id: user._id,
         name: user.name,
