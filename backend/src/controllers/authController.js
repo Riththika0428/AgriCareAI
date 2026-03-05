@@ -7,11 +7,7 @@ const generateToken = () => {
     expiresIn: process.env.JWT_EXPIRE,
   });
 };
-// const generateToken = (id, role) => {
-//   return jwt.sign({ id, role }, process.env.JWT_SECRET, {
-//     expiresIn: process.env.JWT_EXPIRE,
-//   });
-// };
+
 
 // REGISTER
 export const registerUser = async (req, res) => {
@@ -31,7 +27,7 @@ export const registerUser = async (req, res) => {
       role,
     });
 
-    // const token = generateToken(user._id, user.role);
+   
       const token = generateToken(); 
 
     res.status(201).json({
@@ -55,7 +51,7 @@ export const loginUser = async (req, res) => {
 
     if (user && (await user.matchPassword(password))) {
       const token = generateToken();
-      
+
       res.json({
         _id: user._id,
         name: user.name,
