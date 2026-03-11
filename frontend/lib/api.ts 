@@ -1,0 +1,27 @@
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
+  headers: { "Content-Type": "application/json" },
+});
+
+// Attach JWT token to every request automatically
+api.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("agriai_token");
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export default api;
+
+export const authAPI = {
+  register: (data: { name: string; email: string; password: string; role?: string }) =>
+    api.post("/auth/register", data),
+
+  login: (data: { email: string; password: string }) =>
+    api.post("/auth/login", data),
+
+  logout: () => api.post("/auth/logout"),
+};
