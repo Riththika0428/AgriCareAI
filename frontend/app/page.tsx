@@ -1,6 +1,12 @@
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
+import LoginModal from "@/components/LoginModal";
+import RegisterModal from "@/components/RegisterModal";
 
 export default function Home() {
+  const [modal, setModal] = useState<"login" | "register" | null>(null);
+
   return (
     <main
       className="min-h-screen flex items-center justify-center"
@@ -17,26 +23,36 @@ export default function Home() {
           Smart Farming Platform
         </p>
         <div className="flex gap-4 justify-center">
-          <Link
-            href="/login"
+          <button
+            onClick={() => setModal("login")}
             className="px-6 py-3 rounded-xl font-semibold text-white transition-all hover:opacity-90"
             style={{ background: "linear-gradient(135deg, #1a3a1f, #2d6a35)" }}
           >
-            Login
-          </Link>
-          <Link
-            href="/register"
+            Sign In
+          </button>
+          <button
+            onClick={() => setModal("register")}
             className="px-6 py-3 rounded-xl font-semibold transition-all hover:opacity-80"
-            style={{
-              border: "2px solid #1a3a1f",
-              color: "#1a3a1f",
-              background: "transparent",
-            }}
+            style={{ border: "2px solid #1a3a1f", color: "#1a3a1f", background: "transparent" }}
           >
-           Register
-          </Link>
+            Create Account
+          </button>
         </div>
       </div>
+
+      {/* Modals */}
+      {modal === "login" && (
+        <LoginModal
+          onClose={() => setModal(null)}
+          onSwitchToRegister={() => setModal("register")}
+        />
+      )}
+      {modal === "register" && (
+        <RegisterModal
+          onClose={() => setModal(null)}
+          onSwitchToLogin={() => setModal("login")}
+        />
+      )}
     </main>
   );
 }
