@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { authAPI } from "@/lib/axios";
 
 const FARMER = {
   badge: "🌾 Farmer Portal",
@@ -10,9 +11,9 @@ const FARMER = {
   headingRest: "to Smarter\nFarming.",
   sub: "Log in to access your dashboard — crop alerts, disease scanner, marketplace, and weather forecasts all in one place.",
   features: [
-    { icon: "🔬", title: "AI Disease Detection",  desc: "Upload a photo, get instant diagnosis" },
-    { icon: "⛈️", title: "Smart Weather Alerts",   desc: "Crop-specific forecasts for your farm" },
-    { icon: "🛒", title: "Direct Marketplace",     desc: "Sell fresh produce without middlemen" },
+    { icon: "🔬", title: "AI Disease Detection", desc: "Upload a photo, get instant diagnosis" },
+    { icon: "⛈️", title: "Smart Weather Alerts",  desc: "Crop-specific forecasts for your farm" },
+    { icon: "🛒", title: "Direct Marketplace",    desc: "Sell fresh produce without middlemen" },
   ],
   toggleLabel: "Consumer",
   toggleIcon: "🥗",
@@ -25,9 +26,9 @@ const CONSUMER = {
   headingRest: "to Eating\nBetter.",
   sub: "Log in to track your daily nutrition, discover fresh produce from local farmers, and get personalised meal plans.",
   features: [
-    { icon: "📊", title: "Nutrition Tracker",        desc: "Log meals and see your daily nutrient gaps" },
-    { icon: "🤖", title: "AI Meal Recommendations",  desc: "Personalised next-day vegetable plans" },
-    { icon: "🥦", title: "Farm-Fresh Marketplace",   desc: "Buy directly from verified local farmers" },
+    { icon: "📊", title: "Nutrition Tracker",       desc: "Log meals and see your daily nutrient gaps" },
+    { icon: "🤖", title: "AI Meal Recommendations", desc: "Personalised next-day vegetable plans" },
+    { icon: "🥦", title: "Farm-Fresh Marketplace",  desc: "Buy directly from verified local farmers" },
   ],
   toggleLabel: "Farmer",
   toggleIcon: "🌾",
@@ -54,19 +55,10 @@ function ForgotPasswordView({ onBack }: { onBack: () => void }) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/auth/forgotpassword`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) { setError(data.message || "Something went wrong."); return; }
+      await authAPI.forgotPassword(email);
       setSent(true);
-    } catch {
-      setError("Cannot connect to server. Make sure your backend is running.");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Cannot connect to server.");
     } finally {
       setLoading(false);
     }
@@ -87,28 +79,21 @@ function ForgotPasswordView({ onBack }: { onBack: () => void }) {
         🔑
       </div>
 
-      <h3
-        className="font-black text-[#1a3a1f] leading-tight mb-1"
-        style={{ fontFamily: "'Playfair Display', serif", fontSize: "24px" }}
-      >
+      <h3 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "24px", color: "#1a3a1f", lineHeight: 1.2 }}>
         Forgot your
       </h3>
-      <h3
-        className="font-black leading-tight mb-2"
-        style={{ fontFamily: "'Playfair Display', serif", fontSize: "24px", color: "#2d6a35", fontStyle: "italic" }}
-      >
+      <h3 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "24px", color: "#2d6a35", fontStyle: "italic", lineHeight: 1.2, marginBottom: "10px" }}>
         Password?
       </h3>
       <p style={{ fontSize: "13px", color: "#b0aa9e", lineHeight: "1.6", marginBottom: "22px" }}>
         Enter your registered email and we will send you a link to reset your password.
       </p>
 
-      {/* Success state */}
       {sent ? (
         <div style={{ background: "#e8f5e9", border: "1px solid #c8e6c9", borderRadius: "12px", padding: "16px", textAlign: "center" }}>
           <div style={{ fontSize: "28px", marginBottom: "8px" }}>📬</div>
           <p style={{ fontWeight: 700, color: "#2d6a35", fontSize: "14px", marginBottom: "4px" }}>Reset link sent!</p>
-          <p style={{ fontSize: "12px", color: "#5a8a60" }}>Check your email inbox and follow the instructions to reset your password.</p>
+          <p style={{ fontSize: "12px", color: "#5a8a60" }}>Check your email inbox and follow the instructions.</p>
           <button
             onClick={onBack}
             style={{ marginTop: "14px", background: "linear-gradient(135deg,#1a3a1f,#2d6a35)", color: "#fff", border: "none", borderRadius: "9px", padding: "10px 20px", fontWeight: 700, cursor: "pointer", fontSize: "13px" }}
@@ -150,13 +135,13 @@ function ForgotPasswordView({ onBack }: { onBack: () => void }) {
 // ── Main Login Modal ──────────────────────────────────────
 export default function LoginModal({ onClose, onSwitchToRegister }: Props) {
   const router = useRouter();
-  const [panel, setPanel]     = useState<"farmer" | "consumer">("farmer");
-  const [email, setEmail]     = useState("");
-  const [password, setPass]   = useState("");
-  const [showPw, setShowPw]   = useState(false);
-  const [remember, setRem]    = useState(false);
-  const [loading, setLoad]    = useState(false);
-  const [error, setError]     = useState("");
+  const [panel, setPanel]       = useState<"farmer" | "consumer">("farmer");
+  const [email, setEmail]       = useState("");
+  const [password, setPass]     = useState("");
+  const [showPw, setShowPw]     = useState(false);
+  const [remember, setRem]      = useState(false);
+  const [loading, setLoad]      = useState(false);
+  const [error, setError]       = useState("");
   const [showForgot, setForgot] = useState(false);
 
   const content = panel === "farmer" ? FARMER : CONSUMER;
@@ -164,23 +149,21 @@ export default function LoginModal({ onClose, onSwitchToRegister }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) { setError("Please enter your email and password."); return; }
-    setLoad(true); setError("");
+    setLoad(true);
+    setError("");
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/auth/login`,
-        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) }
-      );
-      const data = await res.json();
-      if (!res.ok) { setError(data.message || "Invalid email or password."); return; }
+      const { data } = await authAPI.login({ email, password });
       localStorage.setItem("agriai_token", data.token);
       localStorage.setItem("agriai_user", JSON.stringify(data));
       onClose();
       if (data.role === "admin")       router.push("/dashboard/admin");
       else if (data.role === "farmer") router.push("/dashboard/farmer");
       else                             router.push("/dashboard/consumer");
-    } catch {
-      setError("Cannot connect to server. Make sure your backend is running.");
-    } finally { setLoad(false); }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Cannot connect to server.");
+    } finally {
+      setLoad(false);
+    }
   };
 
   return (
@@ -193,16 +176,10 @@ export default function LoginModal({ onClose, onSwitchToRegister }: Props) {
         className="relative flex w-full overflow-hidden"
         style={{ maxWidth: "820px", maxHeight: "92vh", borderRadius: "20px", boxShadow: "0 24px 60px rgba(0,0,0,0.3)", background: "#fff" }}
       >
-        {/* ✕ Close button */}
+        {/* Close button */}
         <button
           onClick={onClose}
-          style={{
-            position: "absolute", top: "14px", right: "14px", zIndex: 20,
-            width: "32px", height: "32px", borderRadius: "50%",
-            background: "rgba(0,0,0,0.15)", border: "none", cursor: "pointer",
-            color: "#fff", fontSize: "14px", fontWeight: 700,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
+          style={{ position: "absolute", top: "14px", right: "14px", zIndex: 20, width: "32px", height: "32px", borderRadius: "50%", background: "rgba(0,0,0,0.15)", border: "none", cursor: "pointer", color: "#fff", fontSize: "14px", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}
         >
           ✕
         </button>
@@ -246,7 +223,7 @@ export default function LoginModal({ onClose, onSwitchToRegister }: Props) {
               {content.sub}
             </p>
 
-            {/* Features — 3 only (no compost) */}
+            {/* Features */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {content.features.map((f, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 11px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.05)" }}>
@@ -312,11 +289,7 @@ export default function LoginModal({ onClose, onSwitchToRegister }: Props) {
                 <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <label style={{ fontSize: "10px", fontWeight: 700, color: "#a09a90", textTransform: "uppercase", letterSpacing: "0.07em" }}>Password</label>
-                    <button
-                      type="button"
-                      onClick={() => setForgot(true)}
-                      style={{ background: "none", border: "none", cursor: "pointer", fontSize: "11px", fontWeight: 600, color: "#2d6a35", padding: 0 }}
-                    >
+                    <button type="button" onClick={() => setForgot(true)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "11px", fontWeight: 600, color: "#2d6a35", padding: 0 }}>
                       Forgot password?
                     </button>
                   </div>

@@ -2,12 +2,13 @@ import express from "express";
 import {
   registerUser,
   loginUser,
-logoutUser,
-forgotPassword,
+  logoutUser,
+  forgotPassword,
   resetPassword
 } from "../controllers/authController.js";
 import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
 import User from "../models/User.js"; 
+
 const router = express.Router();
 
 router.post("/register", registerUser);

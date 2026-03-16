@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { authAPI } from "@/lib/axios";
 
 function getStrength(pw: string): number {
   let s = 0;
@@ -22,24 +23,23 @@ interface Props {
 export default function RegisterModal({ onClose, onSwitchToLogin }: Props) {
   const router = useRouter();
 
-  // Single name field now
-  const [name, setName]      = useState("");
-  const [email, setEmail]    = useState("");
-  const [password, setPass]  = useState("");
-  const [showPw, setShow]    = useState(false);
-  const [agreed, setAgree]   = useState(false);
-  const [loading, setLoad]   = useState(false);
-  const [error, setError]    = useState("");
-  const [ferrs, setFerrs]    = useState<Record<string, string>>({});
+  const [name, setName]     = useState("");
+  const [email, setEmail]   = useState("");
+  const [password, setPass] = useState("");
+  const [showPw, setShow]   = useState(false);
+  const [agreed, setAgree]  = useState(false);
+  const [loading, setLoad]  = useState(false);
+  const [error, setError]   = useState("");
+  const [ferrs, setFerrs]   = useState<Record<string, string>>({});
 
   const pwStr = password.length === 0 ? 0 : getStrength(password);
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!name.trim())                                          e.name     = "Name is required";
-    if (!email.trim() || !/\S+@\S+\.\S+/.test(email))        e.email    = "Valid email is required";
-    if (!password || password.length < 8)                     e.password = "Minimum 8 characters required";
-    if (!agreed)                                              e.terms    = "Please accept the terms";
+    if (!name.trim())                                   e.name     = "Name is required";
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email))  e.email    = "Valid email is required";
+    if (!password || password.length < 8)               e.password = "Minimum 8 characters required";
+    if (!agreed)                                        e.terms    = "Please accept the terms";
     return e;
   };
 
@@ -47,32 +47,25 @@ export default function RegisterModal({ onClose, onSwitchToLogin }: Props) {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) { setFerrs(errs); return; }
-    setLoad(true); setError("");
+    setLoad(true);
+    setError("");
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/auth/register`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: name.trim(), email, password, role: "user" }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) { setError(data.message || "Registration failed. Please try again."); return; }
+      const { data } = await authAPI.register({
+        name: name.trim(),
+        email,
+        password,
+        role: "user",
+      });
       localStorage.setItem("agriai_token", data.token);
-      localStorage.setItem("agriai_user",  JSON.stringify(data));
+      localStorage.setItem("agriai_user", JSON.stringify(data));
       onClose();
       if (data.role === "farmer") router.push("/dashboard/farmer");
       else                        router.push("/dashboard/consumer");
-    } catch {
-      setError("Cannot connect to server. Make sure your backend is running.");
-    } finally { setLoad(false); }
-  };
-
-  const clrErr = (field: string, inp: HTMLInputElement) => {
-    inp.classList.remove("error");
-    setFerrs(p => ({ ...p, [field]: "" }));
-    setError("");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Registration failed. Please try again.");
+    } finally {
+      setLoad(false);
+    }
   };
 
   return (
@@ -85,16 +78,10 @@ export default function RegisterModal({ onClose, onSwitchToLogin }: Props) {
         className="relative flex w-full overflow-hidden"
         style={{ maxWidth: "820px", maxHeight: "92vh", borderRadius: "20px", boxShadow: "0 24px 60px rgba(0,0,0,0.3)", background: "#fff" }}
       >
-        {/* ✕ Close button */}
+        {/* Close button */}
         <button
           onClick={onClose}
-          style={{
-            position: "absolute", top: "14px", right: "14px", zIndex: 20,
-            width: "32px", height: "32px", borderRadius: "50%",
-            background: "rgba(0,0,0,0.15)", border: "none", cursor: "pointer",
-            color: "#fff", fontSize: "14px", fontWeight: 700,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
+          style={{ position: "absolute", top: "14px", right: "14px", zIndex: 20, width: "32px", height: "32px", borderRadius: "50%", background: "rgba(0,0,0,0.15)", border: "none", cursor: "pointer", color: "#fff", fontSize: "14px", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}
         >
           ✕
         </button>
@@ -136,7 +123,7 @@ export default function RegisterModal({ onClose, onSwitchToLogin }: Props) {
               Create your free account and start growing smarter — AI disease detection, weather alerts, and a direct marketplace await.
             </p>
 
-            {/* Features — 2 only (no compost) */}
+            {/* Features */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {[
                 { icon: "🌾", title: "For Farmers",   desc: "AI disease scan, crop tracking, sell direct" },
@@ -188,7 +175,7 @@ export default function RegisterModal({ onClose, onSwitchToLogin }: Props) {
 
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }} noValidate>
 
-              {/* Single Name field */}
+              {/* Full Name */}
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                 <label style={{ fontSize: "10px", fontWeight: 700, color: "#a09a90", textTransform: "uppercase", letterSpacing: "0.07em" }}>Full Name</label>
                 <div style={{ position: "relative" }}>
@@ -233,14 +220,18 @@ export default function RegisterModal({ onClose, onSwitchToLogin }: Props) {
                     className={`input-field ${ferrs.password ? "error" : ""}`}
                     style={{ paddingRight: "42px" }}
                   />
-                  <button type="button" onClick={() => setShow(v => !v)}
-                    style={{ position: "absolute", right: "11px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "14px", color: "#b0aa9e" }}>
+                  <button
+                    type="button"
+                    onClick={() => setShow(v => !v)}
+                    style={{ position: "absolute", right: "11px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: "14px", color: "#b0aa9e" }}
+                  >
                     {showPw ? "🙈" : "👁️"}
                   </button>
                 </div>
+
                 {/* Strength bar */}
                 <div style={{ display: "flex", gap: "4px", marginTop: "4px" }}>
-                  {[1,2,3,4].map(n => (
+                  {[1, 2, 3, 4].map(n => (
                     <div key={n} style={{ height: "4px", flex: 1, borderRadius: "4px", background: n <= pwStr ? strColors[pwStr] : "#e0ddd6", transition: "background 0.3s" }} />
                   ))}
                 </div>
@@ -277,7 +268,10 @@ export default function RegisterModal({ onClose, onSwitchToLogin }: Props) {
 
             <p style={{ textAlign: "center", fontSize: "12px", color: "#b0aa9e", marginTop: "16px" }}>
               Already have an account?{" "}
-              <button onClick={onSwitchToLogin} style={{ background: "none", border: "none", cursor: "pointer", fontWeight: 600, color: "#2d6a35", fontSize: "12px" }}>
+              <button
+                onClick={onSwitchToLogin}
+                style={{ background: "none", border: "none", cursor: "pointer", fontWeight: 600, color: "#2d6a35", fontSize: "12px" }}
+              >
                 Sign in →
               </button>
             </p>

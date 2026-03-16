@@ -43,7 +43,6 @@ export const createProduct = async (req, res) => {
 
 // ─────────────────────────────────────────────
 // GET ALL PRODUCTS (public)  →  GET /api/products
-// Supports: ?category=Root  ?type=Organic  ?search=spinach
 // ─────────────────────────────────────────────
 export const getAllProducts = async (req, res) => {
   try {
