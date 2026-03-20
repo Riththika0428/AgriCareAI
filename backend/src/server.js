@@ -5,6 +5,10 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";  
 import cookieParser from "cookie-parser";
+// import path         from "path";
+// import { fileURLToPath } from "url";
+import orderRoutes   from "./routes/orderRoutes.js"; 
+
 
 dotenv.config();
 connectDB();
@@ -26,6 +30,8 @@ app.use(express.json());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/orders",   orderRoutes);  
+
 
 app.get("/", (req, res) => {
   res.send(" Agri API Running...");
