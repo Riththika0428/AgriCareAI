@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 // ── Types ──────────────────────────────────────────────────
 interface User {
@@ -28,14 +29,20 @@ interface Profile {
 }
 
 // ── Sidebar nav items ──────────────────────────────────────
+// const NAV = [
+//   { icon: "🏠", label: "Overview",     key: "overview",  section: "FARMING"  },
+//   { icon: "🔬", label: "Crop Doctor",  key: "doctor",    section: ""         },
+//   { icon: "🌾", label: "My Products",  key: "products",  section: ""         },
+//   { icon: "📦", label: "Orders",       key: "orders",    section: ""         },
+//   { icon: "⛈️", label: "Weather",      key: "weather",   section: ""         },
+// ];
 const NAV = [
-  { icon: "🏠", label: "Overview",     key: "overview",  section: "FARMING"  },
-  { icon: "🔬", label: "Crop Doctor",  key: "doctor",    section: ""         },
-  { icon: "🌾", label: "My Products",  key: "products",  section: ""         },
-  { icon: "📦", label: "Orders",       key: "orders",    section: ""         },
-  { icon: "⛈️", label: "Weather",      key: "weather",   section: ""         },
+  { icon: "🏠", label: "Overview",    href: "/dashboard/farmer" },
+  { icon: "🔬", label: "Crop Doctor", href: "/dashboard/farmer/crop-doctor" },
+  { icon: "🌾", label: "My Products", href: "/dashboard/farmer/products" },
+  { icon: "📦", label: "Orders",      href: "/dashboard/farmer/orders" },
+  { icon: "⛈️", label: "Weather",     href: "/dashboard/farmer/weather" },
 ];
-
 // ── Mock crop data ─────────────────────────────────────────
 const CROPS = [
   { name:"Tomato",   field:"Field A (0.5 ac)", planted:"Feb 12", harvest:"Apr 20", progress:65, status:"Growing",     color:"#22c55e", icon:"🍅" },
@@ -64,6 +71,7 @@ const ACTIVITY = [
 // ── Main Dashboard ─────────────────────────────────────────
 export default function FarmerDashboard() {
   const router = useRouter();
+   const pathname = usePathname()
   const [user, setUser]         = useState<User | null>(null);
   const [profile, setProfile]   = useState<Profile | null>(null);
   const [activeNav, setActiveNav] = useState("overview");
@@ -203,7 +211,7 @@ export default function FarmerDashboard() {
         </div>
 
         {/* Nav */}
-        <nav style={{ flex:1, padding:"12px 0", overflowY:"auto" }}>
+        {/* <nav style={{ flex:1, padding:"12px 0", overflowY:"auto" }}>
           {NAV.map((item, i) => (
             <div key={item.key}>
               {item.section && (
@@ -226,7 +234,33 @@ export default function FarmerDashboard() {
               </button>
             </div>
           ))}
-        </nav>
+        </nav> */}
+        
+
+<nav style={{ flex:1, padding:"12px 0", overflowY:"auto" }}>
+  {NAV.map((item, i) => {
+    const isActive = pathname === item.href;
+
+    return (
+      <div key={item.href}>
+        <button
+          onClick={() => router.push(item.href)}
+          style={{
+            width:"100%", display:"flex", alignItems:"center", gap:10,
+            padding:"10px 20px", border:"none",
+            background: isActive ? "rgba(106,170,120,.2)" : "transparent",
+            borderLeft: isActive ? "3px solid #6aaa78" : "3px solid transparent",
+            color: isActive ? "#fff" : "rgba(255,255,255,.55)",
+            fontSize:13, fontWeight: isActive ? 600 : 400,
+            cursor:"pointer", transition:"all .2s", textAlign:"left",
+          }}
+        >
+          <span>{item.icon}</span>{item.label}
+        </button>
+      </div>
+    );
+  })}
+</nav>
 
         {/* Bottom */}
         <div style={{ padding:"12px 0", borderTop:"1px solid rgba(255,255,255,.08)" }}>
