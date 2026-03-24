@@ -4,18 +4,37 @@ import cors from "cors";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js"; 
-import profileRoutes     from "./routes/profileRoutes.js";  
+import profileRoutes     from "./routes/profileRoutes.js"; 
+import diseaseRoutes from "./routes/diseaseRoutes.js";  
 import weatherRoutes from "./routes/weatherRoutes.js"; 
 import cookieParser from "cookie-parser";
-// import path         from "path";
-// import { fileURLToPath } from "url";
+import path         from "path";
+import { fileURLToPath } from "url";
+import subscriptionRoutes from "./routes/subscriptionRoutes.js"; 
+import nutritionRoutes   from "./routes/nutritionRoutes.js"; 
 import orderRoutes   from "./routes/orderRoutes.js"; 
 
+const __filename = fileURLToPath(import.meta.url);     
+const __dirname  = path.dirname(__filename);        
 
-dotenv.config();
+// dotenv.config();
+// dotenv.config({ path: "../.env" });
+// dotenv.config({ path: path.join(__dirname, "../../.env") });
+// dotenv.config({ path: "../../.env" });
+dotenv.config({ path: path.join(__dirname, "../.env") });
 connectDB();
 
 const app = express();
+
+// ── IMPORTANT: Stripe webhook needs raw body ───────────────
+// Must be registered BEFORE express.json()
+app.use("/api/subscriptions/webhook", express.raw({ type: "application/json" }));
+ 
+app.use(cors({ origin:["http://localhost:3000"], credentials:true }));
+app.use(cookieParser());
+app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "../public/uploads")));
+ 
 
 // ── CORS — allow frontend at localhost:3000 ──
 app.use(cors({
@@ -29,12 +48,18 @@ app.use(cookieParser());
 // app.use(cors());
 app.use(express.json());
 
+// Serve uploaded images statically
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders",   orderRoutes);  
 app.use("/api/weather",  weatherRoutes);   
 app.use("/api/profile",       profileRoutes); 
+app.use("/api/diseases", diseaseRoutes); 
+app.use("/api/subscriptions", subscriptionRoutes); 
+app.use("/api/nutrition", nutritionRoutes);
 
 
 app.get("/", (req, res) => {

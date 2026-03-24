@@ -46,22 +46,22 @@ const STATUS_STYLE: Record<string, { bg: string; color: string; border: string }
   Placed:    { bg: "#f4f0e8", color: "#6b8070", border: "#e0ddd6" },
   Confirmed: { bg: "#fff8e6", color: "#a07000", border: "#ffe09a" },
   Packed:    { bg: "#e3f2fd", color: "#1565c0", border: "#bbdefb" },
-  Shipped:   { bg: "#fff8e6", color: "#a07000", border: "#ffe09a" },
+  // Shipped:   { bg: "#fff8e6", color: "#a07000", border: "#ffe09a" },
   Delivered: { bg: "#e8f5e9", color: "#2d6a35", border: "#c8e6c9" },
   Cancelled: { bg: "#fce4ec", color: "#c62828", border: "#f48fb1" },
 };
 
 const STATUS_ICON: Record<string, string> = {
   Placed: "🕐", Confirmed: "✅", Packed: "📦",
-  Shipped: "🚚", Delivered: "🎁", Cancelled: "❌",
+  // Shipped: "🚚", Delivered: "🎁", Cancelled: "❌",
 };
 
 const NEXT_STATUS: Record<string, string> = {
   Placed: "Confirmed", Confirmed: "Packed",
-  Packed: "Shipped",   Shipped: "Delivered",
+  // Packed: "Shipped",   Shipped: "Delivered",
 };
 
-const TABS = ["All", "Placed", "Confirmed", "Shipped", "Delivered"];
+const TABS = ["All", "Placed", "Confirmed", "Delivered"];//"Shipped", "Delivered" ""];
 
 // ── Main Page ──────────────────────────────────────────────
 export default function OrdersPage() {

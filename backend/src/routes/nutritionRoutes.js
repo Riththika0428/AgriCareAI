@@ -1,0 +1,10 @@
+import express from "express";
+import { getTodayLog, getWeeklyLogs, addEntry, removeEntry, getVeggieList } from "../controllers/nutritionController.js";
+import { protect } from "../middlewares/authMiddleware.js";
+const router = express.Router();
+router.get("/vegetables",        protect, getVeggieList);
+router.get("/today",             protect, getTodayLog);
+router.get("/weekly",            protect, getWeeklyLogs);
+router.post("/entry",            protect, addEntry);
+router.delete("/entry/:entryId", protect, removeEntry);
+export default router;
