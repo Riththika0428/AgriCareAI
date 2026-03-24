@@ -123,4 +123,30 @@ export const nutritionAPI = {
   addEntry:      (vegetable:string,grams:number)  => api.post("/nutrition/entry",{vegetable,grams}),
   removeEntry:   (entryId:string)                 => api.delete(`/nutrition/entry/${entryId}`),
 };
- 
+
+
+// ── Add this to your lib/axios-proxy.ts ───────────────
+// Paste at the bottom of the file
+
+export const weatherAPI = {
+  // GET live weather for a district
+  // GET /api/weather/:district
+  getByDistrict: (district: string) =>
+    api.get(`/weather/${encodeURIComponent(district)}`),
+
+  // GET all Sri Lanka districts list
+  // GET /api/weather/districts
+  getDistricts: () => api.get("/weather/districts"),
+
+  // POST save weather alert to farmer's record
+  // POST /api/weather/save
+  save: (data: object) => api.post("/weather/save", data),
+
+  // GET farmer's saved weather alerts
+  // GET /api/weather/my/alerts
+  getMy: () => api.get("/weather/my/alerts"),
+
+  // DELETE a saved weather alert
+  // DELETE /api/weather/:id
+  remove: (id: string) => api.delete(`/weather/${id}`),
+};
