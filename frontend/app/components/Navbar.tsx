@@ -18,7 +18,10 @@ export default function Navbar({ onGetStarted }: Props) {
   return (
     <nav className={`nav${scrolled ? " scrolled" : ""}`}>
       <div className="nav-inner">
-        <a className="logo" href="#">Agri<span>AI</span></a>
+        {/* <a className="logo" href="#">Agri<span>AI</span></a> */}
+        <a href="#" style={{ display:"flex", alignItems:"center", textDecoration:"none" }}>
+  <img src="/Agreal.png" alt="AgriAI" style={{ height:"38px", width:"auto" }} />
+</a>
         <ul className="nav-links">
           <li><a href="#farming">Smart Farming</a></li>
           <li><a href="#nutrition">Nutrition</a></li>

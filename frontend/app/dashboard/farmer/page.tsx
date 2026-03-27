@@ -2295,8 +2295,9 @@ export default function FarmerDashboard() {
         top:0, left:0, bottom:0, zIndex:50,
       }}>
         <div style={{ padding:"22px 20px 16px", borderBottom:"1px solid rgba(255,255,255,.08)" }}>
+          {/* <img src="/Agreal.png" alt="AgriAI" style={{ height:"32px", width:"auto" }} /> */}
           <div style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:22, color:"#fff" }}>
-            Agri<span style={{ color:"#6aaa78" }}>AI</span>
+            Ag<span style={{ color:"#6aaa78" }}>real</span>
           </div>
         </div>
 

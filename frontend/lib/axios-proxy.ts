@@ -150,3 +150,4 @@ export const weatherAPI = {
   // DELETE /api/weather/:id
   remove: (id: string) => api.delete(`/weather/${id}`),
 };
+
