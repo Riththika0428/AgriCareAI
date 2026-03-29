@@ -124,3 +124,13 @@ export const authorizeRoles = (...roles) => {
     next();
   };
 };
+
+// ── 1. middlewares/authMiddleware.js ──────────────────────────────────────────
+// Add this new middleware alongside your existing `protect`:
+ 
+export const adminOnly = (req, res, next) => {
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Admin access required" });
+  }
+  next();
+};

@@ -153,13 +153,36 @@ export const cancelOrder = async (req, res) => {
 // ── ADMIN — GET ALL ORDERS ─────────────────────────────────
 export const adminGetAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find()
-      .populate("consumer", "name email")
-      .populate("farmer",   "name email")
-      .populate("product",  "cropName")
-      .sort("-createdAt");
-    res.json({ count: orders.length, orders });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    const { status, page = 1, limit = 100 } = req.query;
+    const filter = {};
+    if (status && status !== "all") filter.status = status;
+ 
+    const orders = await Order.find(filter)
+      .populate("consumerId", "name email")
+      .populate("farmerId", "name email")
+      .populate("items.productId", "name")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .lean();
+ 
+    const total = await Order.countDocuments(filter);
+    res.json({ success: true, orders, total });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };
+ 
+ 
+// export const adminGetAllOrders = async (req, res) => {
+//   try {
+//     const orders = await Order.find()
+//       .populate("consumer", "name email")
+//       .populate("farmer",   "name email")
+//       .populate("product",  "cropName")
+//       .sort("-createdAt");
+//     res.json({ count: orders.length, orders });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };

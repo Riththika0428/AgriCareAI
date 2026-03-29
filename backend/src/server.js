@@ -12,6 +12,9 @@ import path         from "path";
 import { fileURLToPath } from "url";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js"; 
 import nutritionRoutes   from "./routes/nutritionRoutes.js"; 
+import reviewRoutes      from "./routes/reviewRoutes.js";   
+import paymentRoutes     from "./routes/paymentRoutes.js";     
+import notificationRoutes from "./routes/notificationRoutes.js";
 import orderRoutes   from "./routes/orderRoutes.js"; 
 
 const __filename = fileURLToPath(import.meta.url);     
@@ -60,6 +63,9 @@ app.use("/api/profile",       profileRoutes);
 app.use("/api/diseases", diseaseRoutes); 
 app.use("/api/subscriptions", subscriptionRoutes); 
 app.use("/api/nutrition", nutritionRoutes);
+app.use("/api/reviews",       reviewRoutes);      
+app.use("/api/payments",      paymentRoutes);   
+app.use("/api/notifications", notificationRoutes);  
 
 
 app.get("/", (req, res) => {

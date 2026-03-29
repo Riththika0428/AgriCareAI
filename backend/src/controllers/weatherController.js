@@ -265,3 +265,12 @@ export const getDistricts = (req, res) => {
   const districts = Object.keys(DISTRICT_COORDS);
   res.json({ districts });
 };
+
+export const adminGetAllWeatherAlerts = async (req, res) => {
+  try {
+    const alerts = await WeatherAlert.find({}).sort({ createdAt: -1 }).lean();
+    res.json({ success: true, alerts, total: alerts.length });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

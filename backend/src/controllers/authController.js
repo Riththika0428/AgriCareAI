@@ -157,4 +157,31 @@ export const resetPassword = async (req, res) => {
   }
 };
 
+// ── 2. controllers/authController.js ─────────────────────────────────────────
+// Add this new controller function:
+ 
+export const getAllUsers = async (req, res) => {
+  try {
+    const { role, status, search, page = 1, limit = 100 } = req.query;
+    const filter = {};
+    if (role && role !== "all") filter.role = role;
+    if (status && status !== "all") filter.status = status;
+    if (search) filter.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+    ];
+ 
+    const users = await User.find(filter)
+      .select("-password")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .lean();
+ 
+    const total = await User.countDocuments(filter);
+    res.json({ success: true, users, total });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 

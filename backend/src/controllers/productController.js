@@ -196,17 +196,53 @@ export const deleteProduct = async (req, res) => {
 // ADMIN — GET ALL PRODUCTS  →  GET /api/products/admin/all
 // Admin sees every product with full farmer info
 // ─────────────────────────────────────────────
+// export const adminGetAllProducts = async (req, res) => {
+//   try {
+//     const products = await Product.find()
+//       .populate("farmer", "name email role")
+//       .sort({ createdAt: -1 });
+
+//     res.status(200).json({
+//       count: products.length,
+//       products,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 export const adminGetAllProducts = async (req, res) => {
   try {
-    const products = await Product.find()
-      .populate("farmer", "name email role")
-      .sort({ createdAt: -1 });
+    const products = await Product.find({})
+      .populate("farmerId", "name email")
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json({ success: true, products, total: products.length });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+ 
+// export const adminUpdateProductStatus = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { status } = req.body; // "approved" | "rejected" | "active"
+//     const product = await Product.findByIdAndUpdate(id, { status }, { new: true });
+//     if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+//     res.json({ success: true, product });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
 
-    res.status(200).json({
-      count: products.length,
-      products,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+export const adminUpdateProductStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const product = await Product.findByIdAndUpdate(id, { status }, { new: true });
+    if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+    res.json({ success: true, product });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };

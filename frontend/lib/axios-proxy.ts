@@ -151,3 +151,12 @@ export const weatherAPI = {
   remove: (id: string) => api.delete(`/weather/${id}`),
 };
 
+// ── Admin ─────────────────────────────────────────────────
+// All admin-only endpoints grouped for clarity
+export const adminAPI = {
+  // Users
+  getAllUsers:          ()                              => api.get("/auth/users"),
+  getUserById:         (id: string)                    => api.get(`/auth/users/${id}`),
+  updateUserStatus:    (id: string, status: string)    => api.put(`/auth/users/${id}/status`, { status }),
+  deleteUser:          (id: string)                    => api.delete(`/auth/users/${id}`),
+};
