@@ -16,27 +16,49 @@ const NUTRIENT_TAGS: Record<string, string[]> = {
   "Tomato":["Lycopene","Vitamin C"],"Kale":["Iron","Calcium","Vitamin K"],
 };
 
-// ─── Cart item type ───────────────────────────────────────────────────────────
-interface CartItem {
-  product: any;
-  qty: number;
+interface CartItem { product: any; qty: number; }
+
+const BACKEND_URL = "http://localhost:5000";
+
+// ── Product image with emoji fallback ─────────────────────
+function ProductImage({ product, height = 140 }: { product: any; height?: number }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const emoji = CROP_EMOJI[product.cropName] || "🥬";
+  const showImage = product.imageUrl && !imgFailed;
+
+  return (
+    <div style={{
+      height, width: "100%", overflow: "hidden",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      background: "#f0fdf4", position: "relative",
+    }}>
+      {showImage ? (
+        <img
+          src={`${BACKEND_URL}${product.imageUrl}`}
+          alt={product.cropName}
+          onError={() => setImgFailed(true)}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      ) : (
+        <span style={{ fontSize: height > 80 ? 64 : 28 }}>{emoji}</span>
+      )}
+    </div>
+  );
 }
 
 export default function MarketplacePage() {
-  const [products,   setProducts]  = useState<any[]>([]);
-  const [filtered,   setFiltered]  = useState<any[]>([]);
-  const [loading,    setLoading]   = useState(true);
-  const [search,     setSearch]    = useState("");
-  const [typeFilter, setType]      = useState("All");
-  const [sortBy,     setSort]      = useState("newest");
-
-  // ── Cart state ───────────────────────────────────────────────────────────────
-  const [cart,        setCart]        = useState<Record<string, CartItem>>({});
-  const [cartOpen,    setCartOpen]    = useState(false);
+  const [products,     setProducts]     = useState<any[]>([]);
+  const [filtered,     setFiltered]     = useState<any[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [search,       setSearch]       = useState("");
+  const [typeFilter,   setType]         = useState("All");
+  const [sortBy,       setSort]         = useState("newest");
+  const [cart,         setCart]         = useState<Record<string, CartItem>>({});
+  const [cartOpen,     setCartOpen]     = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [placing,     setPlacing]    = useState(false);
-  const [orderMsg,    setOrderMsg]   = useState("");
-  const [orderForm,   setOrderForm]  = useState({
+  const [placing,      setPlacing]      = useState(false);
+  const [orderMsg,     setOrderMsg]     = useState("");
+  const [orderForm,    setOrderForm]    = useState({
     street: "", city: "", district: "", phone: "", paymentMethod: "COD",
   });
 
@@ -61,62 +83,43 @@ export default function MarketplacePage() {
     setFiltered(list);
   };
 
-  // ── Cart helpers ─────────────────────────────────────────────────────────────
   const addToCart = (product: any) => {
     setCart(prev => ({
       ...prev,
-      [product._id]: {
-        product,
-        qty: (prev[product._id]?.qty || 0) + 1,
-      },
+      [product._id]: { product, qty: (prev[product._id]?.qty || 0) + 1 },
     }));
   };
 
   const updateQty = (id: string, delta: number) => {
     setCart(prev => {
-      const current = prev[id]?.qty || 0;
-      const next = current + delta;
-      if (next <= 0) {
-        const updated = { ...prev };
-        delete updated[id];
-        return updated;
-      }
+      const next = (prev[id]?.qty || 0) + delta;
+      if (next <= 0) { const u = { ...prev }; delete u[id]; return u; }
       return { ...prev, [id]: { ...prev[id], qty: next } };
     });
   };
 
   const removeFromCart = (id: string) => {
-    setCart(prev => {
-      const updated = { ...prev };
-      delete updated[id];
-      return updated;
-    });
+    setCart(prev => { const u = { ...prev }; delete u[id]; return u; });
   };
 
-  const cartItems  = Object.values(cart);
-  const cartCount  = cartItems.reduce((sum, i) => sum + i.qty, 0);
-  const cartTotal  = cartItems.reduce((sum, i) => sum + i.qty * i.product.price, 0);
+  const cartItems = Object.values(cart);
+  const cartCount = cartItems.reduce((s, i) => s + i.qty, 0);
+  const cartTotal = cartItems.reduce((s, i) => s + i.qty * i.product.price, 0);
 
-  // ── Place all orders ──────────────────────────────────────────────────────────
   const handlePlaceOrder = async () => {
     if (!orderForm.street || !orderForm.city || !orderForm.phone) {
       setOrderMsg("Please fill all delivery fields."); return;
     }
     if (cartItems.length === 0) { setOrderMsg("Your cart is empty."); return; }
-
     setPlacing(true); setOrderMsg("");
     try {
-      // Place one order per product (matches existing backend API)
       await Promise.all(
         cartItems.map(({ product, qty }) =>
           orderAPI.create({
-            productId: product._id,
-            quantity: qty,
+            productId: product._id, quantity: qty,
             deliveryAddress: {
-              street: orderForm.street,
-              city: orderForm.city,
-              district: orderForm.district,
-              phone: orderForm.phone,
+              street: orderForm.street, city: orderForm.city,
+              district: orderForm.district, phone: orderForm.phone,
             },
             paymentMethod: orderForm.paymentMethod,
           })
@@ -124,12 +127,13 @@ export default function MarketplacePage() {
       );
       setOrderMsg("✅ All orders placed successfully!");
       setCart({});
-      setTimeout(() => { setCheckoutOpen(false); setOrderMsg(""); setOrderForm({ street:"", city:"", district:"", phone:"", paymentMethod:"COD" }); }, 2000);
+      setTimeout(() => {
+        setCheckoutOpen(false); setOrderMsg("");
+        setOrderForm({ street: "", city: "", district: "", phone: "", paymentMethod: "COD" });
+      }, 2000);
     } catch (e: any) {
       setOrderMsg("❌ " + (e.response?.data?.message || "Order failed."));
-    } finally {
-      setPlacing(false);
-    }
+    } finally { setPlacing(false); }
   };
 
   const inCart = (id: string) => !!cart[id];
@@ -137,7 +141,7 @@ export default function MarketplacePage() {
   return (
     <ConsumerLayout>
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20 }}>
         <div>
           <h1 style={{ fontSize:24, fontWeight:800, color:"#111827", margin:0, display:"flex", alignItems:"center", gap:10 }}>
@@ -145,8 +149,6 @@ export default function MarketplacePage() {
           </h1>
           <p style={{ fontSize:13, color:"#6b7280", marginTop:4 }}>Browse fresh produce from verified farmers</p>
         </div>
-
-        {/* Cart button */}
         <button onClick={() => setCartOpen(true)} style={{
           position:"relative", background:"linear-gradient(135deg,#1a3a2a,#22c55e)",
           color:"#fff", border:"none", borderRadius:12, padding:"10px 20px",
@@ -165,7 +167,7 @@ export default function MarketplacePage() {
         </button>
       </div>
 
-      {/* ── Search + Filters ── */}
+      {/* Filters */}
       <div style={{ display:"flex", gap:12, marginBottom:22, alignItems:"center" }}>
         <div style={{ flex:1, position:"relative" }}>
           <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", fontSize:14, color:"#9ca3af" }}>🔍</span>
@@ -192,7 +194,7 @@ export default function MarketplacePage() {
         </select>
       </div>
 
-      {/* ── Cart summary banner (when items in cart) ── */}
+      {/* Cart banner */}
       {cartCount > 0 && (
         <div style={{
           background:"#f0fdf4", border:"1.5px solid #bbf7d0", borderRadius:12,
@@ -205,17 +207,19 @@ export default function MarketplacePage() {
           <div style={{ display:"flex", gap:10 }}>
             <button onClick={() => setCartOpen(true)} style={{
               background:"none", border:"1.5px solid #22c55e", color:"#166534",
-              borderRadius:8, padding:"7px 16px", fontSize:13, fontWeight:700, cursor:"pointer",
-            }}>View Cart</button>
+              borderRadius:8, padding:"7px 16px", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+              View Cart
+            </button>
             <button onClick={() => { setCartOpen(false); setCheckoutOpen(true); }} style={{
               background:"linear-gradient(135deg,#1a3a2a,#22c55e)", color:"#fff",
-              border:"none", borderRadius:8, padding:"7px 16px", fontSize:13, fontWeight:700, cursor:"pointer",
-            }}>Checkout →</button>
+              border:"none", borderRadius:8, padding:"7px 16px", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+              Checkout →
+            </button>
           </div>
         </div>
       )}
 
-      {/* ── Products grid ── */}
+      {/* Products grid */}
       {loading ? (
         <div style={{ textAlign:"center", padding:"80px", color:"#6b7280" }}>
           <div style={{ fontSize:36, marginBottom:12 }}>🌿</div>
@@ -229,36 +233,40 @@ export default function MarketplacePage() {
       ) : (
         <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:18 }}>
           {filtered.map((p: any) => {
-            const emoji = CROP_EMOJI[p.cropName] || "🥬";
             const tags  = NUTRIENT_TAGS[p.cropName] || [];
             const added = inCart(p._id);
             const qty   = cart[p._id]?.qty || 0;
 
             return (
               <div key={p._id} style={{
-                background:"#fff", borderRadius:16, border:`1.5px solid ${added ? "#bbf7d0" : "#e8ede8"}`,
-                overflow:"hidden", boxShadow: added ? "0 4px 16px rgba(34,197,94,.15)" : "0 2px 8px rgba(0,0,0,.04)",
-                transition:"transform .2s, box-shadow .2s",
+                background:"#fff", borderRadius:16,
+                border:`1.5px solid ${added ? "#bbf7d0" : "#e8ede8"}`,
+                overflow:"hidden",
+                boxShadow: added ? "0 4px 16px rgba(34,197,94,.15)" : "0 2px 8px rgba(0,0,0,.04)",
+                transition:"transform .2s",
               }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform="translateY(-2px)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform="translateY(0)"; }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
               >
-                {/* Image area */}
-                <div style={{ background: added ? "#dcfce7" : "#f0fdf4", height:140,
-                  display:"flex", alignItems:"center", justifyContent:"center", position:"relative" }}>
-                  <span style={{ fontSize:64 }}>{emoji}</span>
+                {/* ── Real image OR emoji fallback ── */}
+                <div style={{ position: "relative" }}>
+                  <ProductImage product={p} height={160} />
+
+                  {/* In-cart badge */}
                   {added && (
                     <div style={{
                       position:"absolute", top:10, left:10,
                       background:"#22c55e", color:"#fff", borderRadius:99,
-                      fontSize:11, fontWeight:700, padding:"3px 10px",
+                      fontSize:11, fontWeight:700, padding:"3px 10px", zIndex:2,
                     }}>✓ In Cart ({qty}kg)</div>
                   )}
+
+                  {/* Wishlist button */}
                   <button style={{
                     position:"absolute", top:10, right:10, background:"#fff",
                     border:"1px solid #e5e7eb", borderRadius:"50%",
                     width:28, height:28, cursor:"pointer", fontSize:14,
-                    display:"flex", alignItems:"center", justifyContent:"center",
+                    display:"flex", alignItems:"center", justifyContent:"center", zIndex:2,
                   }}>🤍</button>
                 </div>
 
@@ -295,18 +303,15 @@ export default function MarketplacePage() {
                       )}
                     </div>
 
-                    {/* Add / qty controls */}
                     {added ? (
                       <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                         <button onClick={() => updateQty(p._id, -1)} style={{
                           width:30, height:30, borderRadius:8, border:"1.5px solid #e5e7eb",
-                          background:"#fff", fontSize:16, cursor:"pointer", fontWeight:700,
-                        }}>−</button>
+                          background:"#fff", fontSize:16, cursor:"pointer", fontWeight:700 }}>−</button>
                         <span style={{ fontSize:14, fontWeight:700, minWidth:20, textAlign:"center" }}>{qty}</span>
                         <button onClick={() => updateQty(p._id, 1)} style={{
                           width:30, height:30, borderRadius:8, border:"1.5px solid #22c55e",
-                          background:"#f0fdf4", fontSize:16, cursor:"pointer", fontWeight:700, color:"#166534",
-                        }}>+</button>
+                          background:"#f0fdf4", fontSize:16, cursor:"pointer", fontWeight:700, color:"#166534" }}>+</button>
                       </div>
                     ) : (
                       <button onClick={() => addToCart(p)} style={{
@@ -324,17 +329,14 @@ export default function MarketplacePage() {
         </div>
       )}
 
-      {/* ════════════════════════════════════════════════════════════════════════
-          CART SIDEBAR MODAL
-      ════════════════════════════════════════════════════════════════════════ */}
+      {/* ── CART SIDEBAR ── */}
       {cartOpen && (
         <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.45)", zIndex:200,
           display:"flex", justifyContent:"flex-end" }}
           onClick={e => { if (e.target === e.currentTarget) setCartOpen(false); }}>
           <div style={{ background:"#fff", width:"100%", maxWidth:420, height:"100%",
-            display:"flex", flexDirection:"column", overflowY:"auto" }}>
+            display:"flex", flexDirection:"column" }}>
 
-            {/* Cart header */}
             <div style={{ padding:"22px 24px 16px", borderBottom:"1px solid #e5e7eb",
               display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               <div>
@@ -345,7 +347,6 @@ export default function MarketplacePage() {
                 style={{ background:"none", border:"none", fontSize:22, cursor:"pointer", color:"#6b7280" }}>✕</button>
             </div>
 
-            {/* Cart items */}
             <div style={{ flex:1, padding:"16px 24px", overflowY:"auto" }}>
               {cartItems.length === 0 ? (
                 <div style={{ textAlign:"center", padding:"60px 0", color:"#9ca3af" }}>
@@ -353,41 +354,39 @@ export default function MarketplacePage() {
                   <div style={{ fontSize:14, fontWeight:600 }}>Your cart is empty</div>
                   <div style={{ fontSize:13, marginTop:4 }}>Browse the marketplace and add products</div>
                 </div>
-              ) : (
-                cartItems.map(({ product: p, qty }) => (
-                  <div key={p._id} style={{ display:"flex", alignItems:"center", gap:14,
-                    padding:"14px 0", borderBottom:"1px solid #f3f4f6" }}>
-                    <div style={{ width:52, height:52, borderRadius:12, background:"#f0fdf4",
-                      display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, flexShrink:0 }}>
-                      {CROP_EMOJI[p.cropName] || "🥬"}
-                    </div>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontSize:14, fontWeight:700, color:"#111827" }}>{p.cropName}</div>
-                      <div style={{ fontSize:12, color:"#6b7280" }}>Rs. {p.price}/kg</div>
-                      <div style={{ fontSize:13, fontWeight:700, color:"#22c55e", marginTop:2 }}>
-                        Rs. {(qty * p.price).toLocaleString()}
-                      </div>
-                    </div>
-                    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                      <button onClick={() => updateQty(p._id, -1)} style={{
-                        width:28, height:28, borderRadius:7, border:"1.5px solid #e5e7eb",
-                        background:"#fff", fontSize:14, cursor:"pointer", fontWeight:700,
-                      }}>−</button>
-                      <span style={{ fontSize:14, fontWeight:700, minWidth:22, textAlign:"center" }}>{qty}</span>
-                      <button onClick={() => updateQty(p._id, 1)} style={{
-                        width:28, height:28, borderRadius:7, border:"1.5px solid #22c55e",
-                        background:"#f0fdf4", fontSize:14, cursor:"pointer", fontWeight:700, color:"#166534",
-                      }}>+</button>
-                    </div>
-                    <button onClick={() => removeFromCart(p._id)} style={{
-                      background:"none", border:"none", color:"#ef4444", cursor:"pointer", fontSize:16, padding:"4px",
-                    }}>🗑</button>
+              ) : cartItems.map(({ product: p, qty }) => (
+                <div key={p._id} style={{ display:"flex", alignItems:"center", gap:14,
+                  padding:"14px 0", borderBottom:"1px solid #f3f4f6" }}>
+
+                  {/* Cart item — image or emoji */}
+                  <div style={{ width:52, height:52, borderRadius:12, overflow:"hidden",
+                    background:"#f0fdf4", flexShrink:0,
+                    display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    <ProductImage product={p} height={52} />
                   </div>
-                ))
-              )}
+
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:14, fontWeight:700, color:"#111827" }}>{p.cropName}</div>
+                    <div style={{ fontSize:12, color:"#6b7280" }}>Rs. {p.price}/kg</div>
+                    <div style={{ fontSize:13, fontWeight:700, color:"#22c55e", marginTop:2 }}>
+                      Rs. {(qty * p.price).toLocaleString()}
+                    </div>
+                  </div>
+                  <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                    <button onClick={() => updateQty(p._id, -1)} style={{
+                      width:28, height:28, borderRadius:7, border:"1.5px solid #e5e7eb",
+                      background:"#fff", fontSize:14, cursor:"pointer", fontWeight:700 }}>−</button>
+                    <span style={{ fontSize:14, fontWeight:700, minWidth:22, textAlign:"center" }}>{qty}</span>
+                    <button onClick={() => updateQty(p._id, 1)} style={{
+                      width:28, height:28, borderRadius:7, border:"1.5px solid #22c55e",
+                      background:"#f0fdf4", fontSize:14, cursor:"pointer", fontWeight:700, color:"#166534" }}>+</button>
+                  </div>
+                  <button onClick={() => removeFromCart(p._id)} style={{
+                    background:"none", border:"none", color:"#ef4444", cursor:"pointer", fontSize:16, padding:"4px" }}>🗑</button>
+                </div>
+              ))}
             </div>
 
-            {/* Cart footer */}
             {cartItems.length > 0 && (
               <div style={{ padding:"16px 24px", borderTop:"1px solid #e5e7eb" }}>
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
@@ -396,24 +395,22 @@ export default function MarketplacePage() {
                 </div>
                 <button onClick={() => { setCartOpen(false); setCheckoutOpen(true); }} style={{
                   width:"100%", padding:"13px", background:"linear-gradient(135deg,#1a3a2a,#22c55e)",
-                  color:"#fff", border:"none", borderRadius:10, fontSize:14, fontWeight:700, cursor:"pointer",
-                }}>
+                  color:"#fff", border:"none", borderRadius:10, fontSize:14, fontWeight:700, cursor:"pointer" }}>
                   Proceed to Checkout →
                 </button>
                 <button onClick={() => setCart({})} style={{
                   width:"100%", marginTop:8, padding:"10px",
                   background:"none", border:"1.5px solid #e5e7eb", color:"#6b7280",
-                  borderRadius:10, fontSize:13, cursor:"pointer",
-                }}>Clear Cart</button>
+                  borderRadius:10, fontSize:13, cursor:"pointer" }}>
+                  Clear Cart
+                </button>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* ════════════════════════════════════════════════════════════════════════
-          CHECKOUT MODAL
-      ════════════════════════════════════════════════════════════════════════ */}
+      {/* ── CHECKOUT MODAL ── */}
       {checkoutOpen && (
         <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.5)", zIndex:300,
           display:"flex", alignItems:"center", justifyContent:"center", padding:"20px" }}
@@ -427,14 +424,17 @@ export default function MarketplacePage() {
                 style={{ background:"none", border:"none", fontSize:20, cursor:"pointer", color:"#6b7280" }}>✕</button>
             </div>
 
-            {/* Order summary */}
+            {/* Order summary with images */}
             <div style={{ background:"#f9fafb", borderRadius:12, padding:"14px 16px", marginBottom:18 }}>
               <div style={{ fontSize:13, fontWeight:700, color:"#374151", marginBottom:10 }}>Order Summary</div>
               {cartItems.map(({ product: p, qty }) => (
                 <div key={p._id} style={{ display:"flex", justifyContent:"space-between",
                   alignItems:"center", marginBottom:8 }}>
-                  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                    <span style={{ fontSize:20 }}>{CROP_EMOJI[p.cropName] || "🥬"}</span>
+                  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                    {/* Checkout item image */}
+                    <div style={{ width:36, height:36, borderRadius:8, overflow:"hidden", flexShrink:0 }}>
+                      <ProductImage product={p} height={36} />
+                    </div>
                     <div>
                       <div style={{ fontSize:13, fontWeight:600, color:"#111827" }}>{p.cropName}</div>
                       <div style={{ fontSize:11, color:"#6b7280" }}>{qty} kg × Rs. {p.price}</div>
@@ -455,10 +455,10 @@ export default function MarketplacePage() {
             {/* Delivery form */}
             <div style={{ fontSize:13, fontWeight:700, color:"#374151", marginBottom:12 }}>Delivery Details</div>
             {[
-              ["Street Address", "street", "123 Main St"],
-              ["City",           "city",   "Colombo"],
-              ["District",       "district","Western"],
-              ["Phone",          "phone",  "+94 77 000 0000"],
+              ["Street Address", "street",   "123 Main St"],
+              ["City",           "city",     "Colombo"],
+              ["District",       "district", "Western"],
+              ["Phone",          "phone",    "+94 77 000 0000"],
             ].map(([label, field, ph]) => (
               <div key={field} style={{ marginBottom:12 }}>
                 <label style={{ fontSize:11, fontWeight:700, color:"#6b7280",
@@ -474,7 +474,6 @@ export default function MarketplacePage() {
               </div>
             ))}
 
-            {/* Payment method */}
             <div style={{ marginBottom:20, padding:"12px 14px",
               background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:10 }}>
               <div style={{ fontSize:13, fontWeight:700, color:"#166534",

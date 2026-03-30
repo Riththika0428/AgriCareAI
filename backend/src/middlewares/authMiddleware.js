@@ -83,10 +83,62 @@
 //   };
 // };
 
+// import jwt  from "jsonwebtoken";
+// import User from "../models/User.js";
+
+// // ── Protect route — must be logged in ─────────────────
+// export const protect = async (req, res, next) => {
+//   let token;
+
+//   if (req.headers.authorization?.startsWith("Bearer")) {
+//     token = req.headers.authorization.split(" ")[1];
+//   }
+
+//   if (!token) {
+//     return res.status(401).json({ message: "Not authorised. No token provided." });
+//   }
+
+//   try {
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     req.user = await User.findById(decoded.id).select("-password");
+//     if (!req.user) return res.status(401).json({ message: "User not found." });
+//     next();
+//   } catch {
+//     return res.status(401).json({ message: "Not authorised. Token invalid or expired." });
+//   }
+// };
+
+// // ── Restrict to specific roles ─────────────────────────
+// // "consumer" and "user" are treated as the same role
+// export const authorizeRoles = (...roles) => {
+//   return (req, res, next) => {
+//     const userRole = req.user.role;
+//     const effectiveRole   = userRole === "consumer" ? "user" : userRole;
+//     const effectiveAllowed = roles.map(r => r === "consumer" ? "user" : r);
+
+//     if (!effectiveAllowed.includes(effectiveRole)) {
+//       return res.status(403).json({
+//         message: `Role '${userRole}' is not allowed to access this route.`,
+//       });
+//     }
+//     next();
+//   };
+// };
+
+// // ── 1. middlewares/authMiddleware.js ──────────────────────────────────────────
+// // Add this new middleware alongside your existing `protect`:
+ 
+// export const adminOnly = (req, res, next) => {
+//   if (req.user?.role !== "admin") {
+//     return res.status(403).json({ success: false, message: "Admin access required" });
+//   }
+//   next();
+// };
+
 import jwt  from "jsonwebtoken";
 import User from "../models/User.js";
 
-// ── Protect route — must be logged in ─────────────────
+// ── Protect route — must be logged in ─────────────────────
 export const protect = async (req, res, next) => {
   let token;
 
@@ -108,12 +160,12 @@ export const protect = async (req, res, next) => {
   }
 };
 
-// ── Restrict to specific roles ─────────────────────────
+// ── Restrict to specific roles ─────────────────────────────
 // "consumer" and "user" are treated as the same role
 export const authorizeRoles = (...roles) => {
   return (req, res, next) => {
-    const userRole = req.user.role;
-    const effectiveRole   = userRole === "consumer" ? "user" : userRole;
+    const userRole       = req.user.role;
+    const effectiveRole    = userRole === "consumer" ? "user" : userRole;
     const effectiveAllowed = roles.map(r => r === "consumer" ? "user" : r);
 
     if (!effectiveAllowed.includes(effectiveRole)) {
@@ -125,9 +177,7 @@ export const authorizeRoles = (...roles) => {
   };
 };
 
-// ── 1. middlewares/authMiddleware.js ──────────────────────────────────────────
-// Add this new middleware alongside your existing `protect`:
- 
+// ── Admin only shorthand ───────────────────────────────────
 export const adminOnly = (req, res, next) => {
   if (req.user?.role !== "admin") {
     return res.status(403).json({ success: false, message: "Admin access required" });

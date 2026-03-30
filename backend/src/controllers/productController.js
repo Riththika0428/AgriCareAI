@@ -1,4 +1,11 @@
 import Product from "../models/Product.js";
+import path    from "path";
+import fs      from "fs";
+import { fileURLToPath } from "url";
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
 
 // ─────────────────────────────────────────────
 // CREATE PRODUCT  →  POST /api/products
@@ -21,6 +28,10 @@ export const createProduct = async (req, res) => {
       return res.status(400).json({ message: "Please fill all required fields" });
     }
 
+      const imageUrl = req.file
+      ? `/uploads/products/${req.file.filename}`
+      : "";
+
     const product = await Product.create({
       farmer: req.user._id,   // comes from protect middleware
       cropName,
@@ -30,6 +41,7 @@ export const createProduct = async (req, res) => {
       stock,
       harvestDate,
       organicTreatmentHistory: organicTreatmentHistory || "",
+       imageUrl,
     });
 
     res.status(201).json({
@@ -152,6 +164,13 @@ export const updateProduct = async (req, res) => {
     if (organicTreatmentHistory !== undefined)
       product.organicTreatmentHistory = organicTreatmentHistory;
     if (status !== undefined) product.status = status;
+    if (req.file) {
+      if (product.imageUrl) {
+        const oldPath = path.join(__dirname, "../../public", product.imageUrl);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+      product.imageUrl = `/uploads/products/${req.file.filename}`;
+    }
 
     const updated = await product.save(); // triggers pre-save (auto status)
 
@@ -163,6 +182,8 @@ export const updateProduct = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
 
 // ─────────────────────────────────────────────
 // DELETE PRODUCT  →  DELETE /api/products/:id
@@ -223,18 +244,6 @@ export const adminGetAllProducts = async (req, res) => {
   }
 };
  
-// export const adminUpdateProductStatus = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const { status } = req.body; // "approved" | "rejected" | "active"
-//     const product = await Product.findByIdAndUpdate(id, { status }, { new: true });
-//     if (!product) return res.status(404).json({ success: false, message: "Product not found" });
-//     res.json({ success: true, product });
-//   } catch (err) {
-//     res.status(500).json({ success: false, message: err.message });
-//   }
-// };
-
 export const adminUpdateProductStatus = async (req, res) => {
   try {
     const { id } = req.params;

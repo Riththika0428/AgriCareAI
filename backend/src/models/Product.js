@@ -55,6 +55,7 @@ const productSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    imageUrl: { type: String, default: "" },
   },
   { timestamps: true }
 );
@@ -69,4 +70,6 @@ productSchema.pre("save", function () {
 });
 
 const Product = mongoose.model("Product", productSchema);
+
+
 export default Product;
