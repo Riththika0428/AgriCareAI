@@ -100,6 +100,7 @@ import reviewRoutes       from "./routes/reviewRoutes.js";
 import paymentRoutes      from "./routes/paymentRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import orderRoutes        from "./routes/orderRoutes.js";
+import advisoryRoutes     from "./routes/advisoryRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -143,6 +144,7 @@ app.use("/api/nutrition",     nutritionRoutes);
 app.use("/api/reviews",       reviewRoutes);
 app.use("/api/payments",      paymentRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/advisory",      advisoryRoutes);
 
 app.get("/", (req, res) => res.send("Agri API Running..."));
 

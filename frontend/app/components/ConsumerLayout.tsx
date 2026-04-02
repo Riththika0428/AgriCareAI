@@ -125,7 +125,7 @@ export default function ConsumerLayout({ children }: { children: React.ReactNode
           boxShadow:"0 1px 6px rgba(0,0,0,.04)" }}>
           <div>
             <div style={{ fontSize:17, fontWeight:700, color:"#111827" }}>
-              Good {new Date().getHours()<12?"Morning":new Date().getHours()<17?"Afternoon":"Evening"}, {user?.name?.split(" ")[0]} 🌿
+              Good {new Date().getHours()<12?"Morning":new Date().getHours()<17?"Afternoon":"Evening"}, {user?.name?.split(" ")[0]} 
             </div>
             <div style={{ fontSize:12, color:"#6b7280", marginTop:2 }}>
               {new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})} · You've logged 2 of 5 recommended veggies today

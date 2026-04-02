@@ -22,6 +22,10 @@ const diseaseSchema = new mongoose.Schema({
   chemicalTreatments: { type: [treatmentSchema], default: [] },
   status:             { type: String, enum: ["Pending","Treated","Monitoring","Resolved"], default: "Pending" },
   notes:              { type: String, default: "" },
+  detailedAnalysis:   { type: String, default: "" },
+  
 }, { timestamps: true });
+
+
 
 export default mongoose.model("Disease", diseaseSchema);

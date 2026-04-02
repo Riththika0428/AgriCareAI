@@ -21,12 +21,12 @@ interface WeatherData {
 
 // ── Constants ──────────────────────────────────────────
 const NAV = [
-  { icon:"🏠", label:"Overview",    href:"/dashboard/farmer" },
-  { icon:"🔬", label:"Crop Doctor", href:"/dashboard/farmer/crop-doctor" },
-  { icon:"🌾", label:"My Products", href:"/dashboard/farmer/products" },
-  { icon:"📦", label:"Orders",      href:"/dashboard/farmer/orders" },
-  { icon:"⛈️", label:"Weather",     href:"/dashboard/farmer/weather" },
-  { icon:"💰", label:"Earnings",    href:"/dashboard/farmer/earnings" },
+  { label: "Overview",    href: "/dashboard/farmer",              icon: "⌂" },
+  { label: "Crop Doctor", href: "/dashboard/farmer/crop-doctor",  icon: "✦" },
+  { label: "My Products", href: "/dashboard/farmer/products",     icon: "❧" },
+  { label: "Orders",      href: "/dashboard/farmer/orders",       icon: "◈" },
+  { label: "Weather",     href: "/dashboard/farmer/weather",      icon: "◎" },
+  { label: "Earnings",    href: "/dashboard/farmer/earnings",     icon: "◇" },
 ];
 
 const SL_DISTRICTS = [
@@ -127,7 +127,85 @@ export default function WeatherPage() {
     <div style={{ display:"flex", minHeight:"100vh", fontFamily:"'DM Sans',sans-serif", background:"#f4f0e8" }}>
 
       {/* ══ SIDEBAR ══ */}
-      <aside style={{ width:190, background:"linear-gradient(180deg,#1a3a2a 0%,#0f2418 100%)",
+       
+      <aside style={{
+        width: 200, background: "linear-gradient(180deg,#1a3a2a 0%,#0f2418 100%)",
+        display: "flex", flexDirection: "column",
+        position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 50,
+      }}>
+        {/* Logo */}
+        <div style={{ padding: "24px 22px 18px", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
+          <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 900, fontSize: 24, color: "#fff" }}>
+            Ag<span style={{ color: "#6aaa78" }}>real</span>
+          </div>
+        </div>
+
+        {/* User */}
+        <div style={{ padding: "16px 22px", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6aaa78,#2d5a3d)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 15, fontWeight: 700, color: "#fff",
+              boxShadow: "0 2px 8px rgba(106,170,120,.4)",
+            }}>
+              {getInitial()}
+            </div>
+            <div>
+              <div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{user?.name || "Farmer"}</div>
+              <div style={{ color: "rgba(255,255,255,.4)", fontSize: 11 }}>My Farm</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Nav label */}
+        <div style={{ padding: "16px 22px 6px", fontSize: "10px", fontWeight: 700,
+          color: "rgba(255,255,255,.25)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+          Navigation
+        </div>
+
+        {/* Nav items */}
+        <nav style={{ flex: 1, padding: "4px 10px", overflowY: "auto" }}>
+          {NAV.map(item => {
+            const isActive = pathname === item.href;
+            return (
+              <button key={item.href} onClick={() => router.push(item.href)} style={{
+                width: "100%", display: "flex", alignItems: "center", gap: 10,
+                padding: "9px 12px", border: "none", borderRadius: "10px",
+                marginBottom: "2px",
+                background: isActive ? "rgba(106,170,120,.18)" : "transparent",
+                color: isActive ? "#fff" : "rgba(255,255,255,.5)",
+                fontSize: 13, fontWeight: isActive ? 600 : 400,
+                cursor: "pointer", transition: "all .18s", textAlign: "left",
+                position: "relative",
+              }}>
+                {isActive && (
+                  <div style={{
+                    position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)",
+                    width: 3, height: 20, background: "#6aaa78", borderRadius: "0 3px 3px 0",
+                  }} />
+                )}
+                <span style={{ fontSize: "15px", opacity: isActive ? 1 : 0.6 }}>{item.icon}</span>
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Settings & Logout */}
+        <div style={{ padding: "10px", borderTop: "1px solid rgba(255,255,255,.08)" }}>
+          <button onClick={handleLogout} style={{
+            width: "100%", display: "flex", alignItems: "center", gap: 10,
+            padding: "9px 12px", border: "none", background: "transparent",
+            color: "#ef4444", fontSize: 13, cursor: "pointer", fontWeight: 600,
+            borderRadius: "10px",
+          }}>
+            <span>⎋</span> Sign Out
+          </button>
+        </div>
+      </aside>
+
+      {/* <aside style={{ width:190, background:"linear-gradient(180deg,#1a3a2a 0%,#0f2418 100%)",
         display:"flex", flexDirection:"column", position:"fixed",
         top:0, left:0, bottom:0, zIndex:50 }}>
         <div style={{ padding:"22px 20px 16px", borderBottom:"1px solid rgba(255,255,255,.08)" }}>
@@ -175,7 +253,7 @@ export default function WeatherPage() {
             🚪 Sign Out
           </button>
         </div>
-      </aside>
+      </aside> */}
 
       {/* ══ MAIN ══ */}
       <main style={{ marginLeft:190, flex:1, padding:"28px 32px" }}>
