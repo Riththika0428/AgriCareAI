@@ -48,8 +48,8 @@ const productSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Active", "Out of Stock", "Inactive"],
-      default: "Active",
+      enum: ["pending", "approved", "rejected", "Active", "Out of Stock", "Inactive", "active"],
+      default: "pending",
     },
     image: {
       type: String,
