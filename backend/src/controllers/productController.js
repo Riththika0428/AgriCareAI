@@ -235,7 +235,7 @@ export const deleteProduct = async (req, res) => {
 export const adminGetAllProducts = async (req, res) => {
   try {
     const products = await Product.find({})
-      .populate("farmerId", "name email")
+      .populate("farmer", "name email")
       .sort({ createdAt: -1 })
       .lean();
     res.json({ success: true, products, total: products.length });
