@@ -457,6 +457,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { diseaseAPI } from "@/lib/axios-proxy";
+import { PageHeader } from "@/app/components/BackButton";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Treatment { name:string; dosage:string; instruction?:string; warning?:string; }
@@ -682,7 +683,11 @@ export default function CropDoctorPage() {
               <Icon d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" size={20} style={{ color:"#6aaa78" }}/>
             </div>
             <div>
-              <h1 style={{ fontSize:22, fontWeight:800, color:"#1a3a2a", margin:0 }}>AI Crop Doctor</h1>
+              <h1 style={{ fontSize:22, fontWeight:800, color:"#1a3a2a", margin:0 }}><PageHeader
+  title="Crop Doctor"
+  backTo="/dashboard/farmer"
+  subtitle="Upload a photo of your crop for AI diagnosis"
+/></h1>
               <p style={{ fontSize:13, color:"#6b8070", margin:0 }}>
                 Powered by Cerebras AI — instant plant disease detection
               </p>

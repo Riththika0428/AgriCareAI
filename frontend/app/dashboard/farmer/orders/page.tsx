@@ -483,6 +483,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { orderAPI } from "@/lib/axios-proxy";
+import { PageHeader } from "@/app/components/BackButton";
 
 // ── Types ──────────────────────────────────────────────────
 interface Order {
@@ -570,7 +571,7 @@ function OrderModal({ order, onClose, onUpdated }: {
         <div style={{ background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", padding: "22px 24px", borderRadius: "18px 18px 0 0" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <div>
-              <div style={{ color: "rgba(255,255,255,.6)", fontSize: 11, marginBottom: 2 }}>Order Details</div>
+              <div style={{ color: "rgba(255,255,255,.6)", fontSize: 11, marginBottom: 2 }}><PageHeader title="My Orders" backTo="/dashboard/farmer" /></div>
               <h2 style={{ color: "#fff", fontSize: 18, fontWeight: 700, margin: 0 }}>#{order.orderNumber}</h2>
             </div>
             <button onClick={onClose} style={{ background: "rgba(255,255,255,.15)", border: "none",

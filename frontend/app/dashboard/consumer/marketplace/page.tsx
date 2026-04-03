@@ -514,6 +514,7 @@
 import { useState, useEffect } from "react";
 import ConsumerLayout from "@/app/components/ConsumerLayout";
 import { productAPI, orderAPI } from "@/lib/axios-proxy";
+import { PageHeader } from "@/app/components/BackButton";
 
 const BACKEND = "http://localhost:5000";
 const COLOR = { green:"#22c55e", dark:"#1a3a2a", mid:"#2d5a3d", text:"#111827", muted:"#6b7280", border:"#e8ede8", bg:"#f8faf8" };
@@ -634,7 +635,7 @@ export default function MarketplacePage() {
       {/* ── Header ── */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:22}}>
         <div>
-          <h1 style={{fontSize:22,fontWeight:800,color:COLOR.text,margin:0}}>Marketplace</h1>
+          <h1 style={{fontSize:22,fontWeight:800,color:COLOR.text,margin:0}}><PageHeader title="Marketplace" backTo="/dashboard/consumer" /></h1>
           <p style={{fontSize:13,color:COLOR.muted,marginTop:3}}>
             {filtered.length} products from verified farmers
             {bulkMode&&selected.size>0&&<span style={{marginLeft:8,color:"#22c55e",fontWeight:700}}> · {selected.size} selected</span>}

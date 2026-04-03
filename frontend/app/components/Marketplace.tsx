@@ -72,7 +72,7 @@ export default function Marketplace() {
         <div className="market-header">
           <div className="section-tag">Direct Marketplace</div>
           <h2 className="section-h2" style={{ textAlign: "center" }}>
-            Farm to Table — No Middlemen
+            Farm to Table - No Middlemen
           </h2>
           <p className="section-p" style={{ textAlign: "center" }}>
             Buy fresh vegetables directly from local farmers. Better prices,
