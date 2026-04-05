@@ -330,6 +330,8 @@ export const nutritionAPI = {
   getWeekly:   ()                              => api.get("/nutrition/weekly"),
   addEntry:    (vegetable: string, grams: number) => api.post("/nutrition/entry", { vegetable, grams }),
   removeEntry: (entryId: string)              => api.delete(`/nutrition/entry/${entryId}`),
+  // Inside nutritionAPI object:
+  getAiAdvice: () => api.get("/nutrition/ai-advice"),
 };
 
 // ─── Weather API ──────────────────────────────────────────────────────────────
