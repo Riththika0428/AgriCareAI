@@ -325,14 +325,23 @@ export const subscriptionAPI = {
 
 // ─── Nutrition API ────────────────────────────────────────────────────────────
 export const nutritionAPI = {
-  getVeggies:  ()                              => api.get("/nutrition/vegetables"),
-  getToday:    ()                              => api.get("/nutrition/today"),
-  getWeekly:   ()                              => api.get("/nutrition/weekly"),
-  addEntry:    (vegetable: string, grams: number) => api.post("/nutrition/entry", { vegetable, grams }),
-  removeEntry: (entryId: string)              => api.delete(`/nutrition/entry/${entryId}`),
-  // Inside nutritionAPI object:
-  getAiAdvice: () => api.get("/nutrition/ai-advice"),
+  getVeggies:  ()                                  => api.get("/nutrition/veggies"),
+  getToday:    ()                                  => api.get("/nutrition/today"),
+  getWeekly:   ()                                  => api.get("/nutrition/weekly"),
+  addEntry:    (vegetable: string, grams: number)  => api.post("/nutrition/add", { vegetable, grams }),
+  removeEntry: (entryId: string)                   => api.delete(`/nutrition/${entryId}`),
+  getAiAdvice: ()                                  => api.get("/nutrition/ai-advice"),
 };
+ 
+// export const nutritionAPI = {
+//   getVeggies:  ()                              => api.get("/nutrition/vegetables"),
+//   getToday:    ()                              => api.get("/nutrition/today"),
+//   getWeekly:   ()                              => api.get("/nutrition/weekly"),
+//   addEntry:    (vegetable: string, grams: number) => api.post("/nutrition/entry", { vegetable, grams }),
+//   removeEntry: (entryId: string)              => api.delete(`/nutrition/entry/${entryId}`),
+//   // Inside nutritionAPI object:
+//   getAiAdvice: () => api.get("/nutrition/ai-advice"),
+// };
 
 // ─── Weather API ──────────────────────────────────────────────────────────────
 export const weatherAPI = {

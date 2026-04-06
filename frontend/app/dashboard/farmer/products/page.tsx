@@ -1,958 +1,462 @@
 // // // "use client";
 
-// // // import { useState, useEffect } from "react";
+// // // import { useState, useEffect, useRef } from "react";
 // // // import { useRouter } from "next/navigation";
-// // // import { authAPI } from "@/lib/axios-proxy";
+// // // import { productAPI, profileAPI } from "@/lib/axios-proxy";
+// // // import api from "@/lib/axios-proxy";
 
-// // // // ── Types ──────────────────────────────────────────────────
+// // // interface User    { _id: string; name: string; email: string; role: string; }
+// // // interface Profile { farmName: string; district: string; }
 // // // interface Product {
-// // //   _id: string;
-// // //   cropName: string;
-// // //   category: string;
-// // //   type: string;
-// // //   price: number;
-// // //   stock: number;
-// // //   harvestDate?: string;
-// // //   organicTreatmentHistory?: string;
-// // //   trustScore: number;
-// // //   status: "Active" | "Out of Stock" | "Inactive";
+// // //   _id: string; cropName: string; category: string; price: number;
+// // //   stock: number; status: string; imageUrl?: string; createdAt?: string;
+// // //   description?: string; unit?: string;
 // // // }
 
-// // // const CATEGORIES = ["Leafy Green","Root","Fruit","Grain","Herb","Other"];
-// // // const TYPES      = ["Organic","Conventional"];
-// // // const API        = "http://localhost:5000/api";
-
-// // // // ── Add/Edit Modal ─────────────────────────────────────────
-// // // function ProductModal({
-// // //   product, token, onClose, onSaved,
-// // // }: {
-// // //   product: Product | null;
-// // //   token: string;
-// // //   onClose: () => void;
-// // //   onSaved: () => void;
-// // // }) {
-// // //   const isEdit = !!product;
-// // //   const [form, setForm] = useState({
-// // //     cropName:                product?.cropName                || "",
-// // //     category:                product?.category                || "",
-// // //     type:                    product?.type                    || "",
-// // //     price:                   product?.price?.toString()       || "",
-// // //     stock:                   product?.stock?.toString()       || "",
-// // //     harvestDate:             product?.harvestDate             || "",
-// // //     organicTreatmentHistory: product?.organicTreatmentHistory || "",
-// // //   });
-// // //   const [loading, setLoad] = useState(false);
-// // //   const [error, setError]  = useState("");
-
-// // //   const handleSave = async () => {
-// // //     if (!form.cropName || !form.category || !form.type || !form.price || !form.stock) {
-// // //       setError("Please fill all required fields."); return;
-// // //     }
-// // //     setLoad(true); setError("");
-// // //     try {
-// // //       const body = {
-// // //         cropName:  form.cropName,
-// // //         category:  form.category,
-// // //         type:      form.type,
-// // //         price:     Number(form.price),
-// // //         stock:     Number(form.stock),
-// // //         harvestDate: form.harvestDate || undefined,
-// // //         organicTreatmentHistory: form.organicTreatmentHistory || undefined,
-// // //       };
-// // //       const url    = isEdit ? `${API}/products/${product!._id}` : `${API}/products`;
-// // //       const method = isEdit ? "PUT" : "POST";
-// // //       const res    = await fetch(url, {
-// // //         method,
-// // //         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-// // //         body: JSON.stringify(body),
-// // //       });
-// // //       const data = await res.json();
-// // //       if (!res.ok) { setError(data.message || "Failed to save product."); return; }
-// // //       onSaved();
-// // //       onClose();
-// // //     } catch {
-// // //       setError("Cannot connect to server.");
-// // //     } finally { setLoad(false); }
-// // //   };
-
-// // //   return (
-// // //     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center", padding:"20px" }}
-// // //       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-// // //       <div style={{ background:"#f9f7f3", borderRadius:"18px", padding:"32px", width:"100%", maxWidth:"560px", maxHeight:"90vh", overflowY:"auto" }}>
-// // //         {/* Header */}
-// // //         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
-// // //           <h2 style={{ fontSize:"20px", fontWeight:700, color:"#1a3a2a" }}>
-// // //             {isEdit ? "Edit Product" : "Add New Product"}
-// // //           </h2>
-// // //           <button onClick={onClose} style={{ background:"none", border:"none", fontSize:"20px", cursor:"pointer", color:"#6b8070" }}>✕</button>
-// // //         </div>
-
-// // //         {error && (
-// // //           <div style={{ background:"#fff1f1", border:"1px solid #fcd0d0", borderRadius:"10px", padding:"10px 14px", color:"#c0392b", fontSize:"13px", marginBottom:"16px" }}>
-// // //             ⚠️ {error}
-// // //           </div>
-// // //         )}
-
-// // //         {/* Form grid */}
-// // //         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"16px", marginBottom:"16px" }}>
-// // //           {/* Crop Name */}
-// // //           <div>
-// // //             <label style={labelStyle}>Crop Name *</label>
-// // //             <input
-// // //               type="text" placeholder="e.g. Organic Spinach"
-// // //               value={form.cropName} onChange={e => setForm({...form, cropName:e.target.value})}
-// // //               style={inputStyle}
-// // //             />
-// // //           </div>
-// // //           {/* Category */}
-// // //           <div>
-// // //             <label style={labelStyle}>Category *</label>
-// // //             <select value={form.category} onChange={e => setForm({...form, category:e.target.value})} style={inputStyle}>
-// // //               <option value="">Select</option>
-// // //               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-// // //             </select>
-// // //           </div>
-// // //           {/* Price */}
-// // //           <div>
-// // //             <label style={labelStyle}>Price (Rs/kg) *</label>
-// // //             <input
-// // //               type="number" placeholder="150"
-// // //               value={form.price} onChange={e => setForm({...form, price:e.target.value})}
-// // //               style={inputStyle}
-// // //             />
-// // //           </div>
-// // //           {/* Stock */}
-// // //           <div>
-// // //             <label style={labelStyle}>Available Quantity (kg) *</label>
-// // //             <input
-// // //               type="number" placeholder="25"
-// // //               value={form.stock} onChange={e => setForm({...form, stock:e.target.value})}
-// // //               style={inputStyle}
-// // //             />
-// // //           </div>
-// // //           {/* Harvest Date */}
-// // //           <div>
-// // //             <label style={labelStyle}>Harvest Date</label>
-// // //             <input
-// // //               type="date"
-// // //               value={form.harvestDate} onChange={e => setForm({...form, harvestDate:e.target.value})}
-// // //               style={inputStyle}
-// // //             />
-// // //           </div>
-// // //           {/* Type */}
-// // //           <div>
-// // //             <label style={labelStyle}>Type *</label>
-// // //             <select value={form.type} onChange={e => setForm({...form, type:e.target.value})} style={inputStyle}>
-// // //               <option value="">Select</option>
-// // //               {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-// // //             </select>
-// // //           </div>
-// // //         </div>
-
-// // //         {/* Organic Treatment */}
-// // //         <div style={{ marginBottom:"24px" }}>
-// // //           <label style={labelStyle}>Organic Treatment History (optional)</label>
-// // //           <textarea
-// // //             placeholder="Describe treatments used..."
-// // //             value={form.organicTreatmentHistory}
-// // //             onChange={e => setForm({...form, organicTreatmentHistory:e.target.value})}
-// // //             rows={3}
-// // //             style={{ ...inputStyle, resize:"none", height:"auto" }}
-// // //           />
-// // //         </div>
-
-// // //         {/* Submit */}
-// // //         <button onClick={handleSave} disabled={loading} style={{
-// // //           width:"100%", padding:"13px",
-// // //           background: loading ? "#a8d5b5" : "linear-gradient(135deg,#1a3a2a,#2d6a35)",
-// // //           color:"white", border:"none", borderRadius:"10px",
-// // //           fontFamily:"'DM Sans',sans-serif", fontSize:"15px", fontWeight:700,
-// // //           cursor: loading ? "not-allowed" : "pointer",
-// // //         }}>
-// // //           {loading ? "Saving…" : isEdit ? "Save Changes" : "List Product"}
-// // //         </button>
-// // //       </div>
-// // //     </div>
-// // //   );
-// // // }
-
-// // // const labelStyle: React.CSSProperties = {
-// // //   fontSize:"11px", fontWeight:700, color:"#6b8070",
-// // //   textTransform:"uppercase", letterSpacing:"0.06em",
-// // //   display:"block", marginBottom:"6px",
-// // // };
-// // // const inputStyle: React.CSSProperties = {
-// // //   width:"100%", padding:"10px 14px",
-// // //   border:"1.5px solid #e0ddd6", borderRadius:"10px",
-// // //   fontFamily:"'DM Sans',sans-serif", fontSize:"14px",
-// // //   color:"#1a3a2a", background:"white", outline:"none",
-// // // };
-
-// // // // ── Main Page ──────────────────────────────────────────────
-// // // export default function MyProductsPage() {
-// // //   const router = useRouter();
-// // //   const [token, setToken]     = useState("");
-// // //   const [products, setProds]  = useState<Product[]>([]);
-// // //   const [loading, setLoad]    = useState(true);
-// // //   const [search, setSearch]   = useState("");
-// // //   const [modal, setModal]     = useState<"add" | "edit" | null>(null);
-// // //   const [selected, setSelected] = useState<Product | null>(null);
-// // //   const [deleting, setDeleting] = useState<string | null>(null);
-
-// // //   useEffect(() => {
-// // //     const t = localStorage.getItem("agriai_token");
-// // //     if (!t) { router.push("/"); return; }
-// // //     setToken(t);
-// // //     fetchProducts(t);
-// // //   }, []);
-
-// // //   const fetchProducts = async (t: string) => {
-// // //     setLoad(true);
-// // //     try {
-// // //       const res  = await fetch(`${API}/products/my/list`, {
-// // //         headers: { Authorization: `Bearer ${t}` },
-// // //       });
-// // //       const data = await res.json();
-// // //       if (res.ok) setProds(Array.isArray(data) ? data : data.products || []);
-// // //     } catch {}
-// // //     setLoad(false);
-// // //   };
-
-// // //   const handleDelete = async (id: string) => {
-// // //     if (!confirm("Delete this product?")) return;
-// // //     setDeleting(id);
-// // //     try {
-// // //       await fetch(`${API}/products/${id}`, {
-// // //         method: "DELETE",
-// // //         headers: { Authorization: `Bearer ${token}` },
-// // //       });
-// // //       setProds(prev => prev.filter(p => p._id !== id));
-// // //     } catch {}
-// // //     setDeleting(null);
-// // //   };
-
-// // //   const filtered = products.filter(p =>
-// // //     p.cropName.toLowerCase().includes(search.toLowerCase())
-// // //   );
-
-// // //   const CROP_ICONS: Record<string,string> = {
-// // //     "Leafy Green":"🥬", "Root":"🥕", "Fruit":"🍅",
-// // //     "Grain":"🌾", "Herb":"🌿", "Other":"🌱",
-// // //   };
-
-// // //   return (
-// // //     <div style={{ minHeight:"100vh", background:"#f4f0e8", fontFamily:"'DM Sans',sans-serif", padding:"28px 32px" }}>
-
-// // //       {/* Header */}
-// // //       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"24px" }}>
-// // //         <div>
-// // //           <h1 style={{ fontSize:"24px", fontWeight:700, color:"#1a3a2a" }}>My Products</h1>
-// // //           <p style={{ fontSize:"14px", color:"#6b8070", marginTop:"4px" }}>
-// // //             Manage your listed produce on the marketplace
-// // //           </p>
-// // //         </div>
-// // //         <button
-// // //           onClick={() => { setSelected(null); setModal("add"); }}
-// // //           style={{ display:"flex", alignItems:"center", gap:"8px", padding:"11px 20px", background:"linear-gradient(135deg,#1a3a2a,#2d6a35)", color:"white", border:"none", borderRadius:"100px", fontFamily:"'DM Sans',sans-serif", fontSize:"14px", fontWeight:600, cursor:"pointer" }}
-// // //         >
-// // //           + Add Product
-// // //         </button>
-// // //       </div>
-
-// // //       {/* Search + Filter */}
-// // //       <div style={{ display:"flex", gap:"12px", marginBottom:"24px" }}>
-// // //         <div style={{ flex:1, position:"relative" }}>
-// // //           <span style={{ position:"absolute", left:"14px", top:"50%", transform:"translateY(-50%)", fontSize:"16px" }}>🔍</span>
-// // //           <input
-// // //             type="text" placeholder="Search products..."
-// // //             value={search} onChange={e => setSearch(e.target.value)}
-// // //             style={{ width:"100%", padding:"11px 14px 11px 42px", border:"1.5px solid #e0ddd6", borderRadius:"12px", fontFamily:"'DM Sans',sans-serif", fontSize:"14px", background:"white", outline:"none" }}
-// // //           />
-// // //         </div>
-// // //         <button style={{ padding:"11px 16px", background:"white", border:"1.5px solid #e0ddd6", borderRadius:"12px", cursor:"pointer", fontSize:"18px" }}>
-// // //           ⚗️
-// // //         </button>
-// // //       </div>
-
-// // //       {/* Products grid */}
-// // //       {loading ? (
-// // //         <div style={{ textAlign:"center", padding:"60px", color:"#6b8070" }}>Loading products…</div>
-// // //       ) : filtered.length === 0 ? (
-// // //         <div style={{ textAlign:"center", padding:"60px", color:"#c0bdb5" }}>
-// // //           <div style={{ fontSize:"48px", marginBottom:"12px" }}>🌱</div>
-// // //           <div style={{ fontSize:"16px" }}>No products yet. Click Add Product to get started.</div>
-// // //         </div>
-// // //       ) : (
-// // //         <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"18px" }}>
-// // //           {filtered.map(p => (
-// // //             <div key={p._id} style={{ background:"white", borderRadius:"16px", padding:"22px", border:"1px solid #e8e4dc", position:"relative" }}>
-// // //               {/* Organic badge */}
-// // //               {p.type === "Organic" && (
-// // //                 <div style={{ position:"absolute", top:"16px", right:"16px", background:"#e8f5e9", color:"#2d6a35", fontSize:"11px", fontWeight:700, padding:"3px 10px", borderRadius:"100px", display:"flex", alignItems:"center", gap:"4px" }}>
-// // //                   🌿 Organic
-// // //                 </div>
-// // //               )}
-
-// // //               {/* Crop name + category */}
-// // //               <div style={{ marginBottom:"12px" }}>
-// // //                 <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px" }}>
-// // //                   <span style={{ fontSize:"22px" }}>{CROP_ICONS[p.category] || "🌱"}</span>
-// // //                   <span style={{ fontSize:"16px", fontWeight:700, color:"#1a3a2a" }}>{p.cropName}</span>
-// // //                 </div>
-// // //                 <div style={{ fontSize:"13px", color:"#6b8070", marginLeft:"30px" }}>{p.category}</div>
-// // //               </div>
-
-// // //               {/* Trust score */}
-// // //               {p.trustScore > 0 && (
-// // //                 <div style={{ display:"flex", alignItems:"center", gap:"6px", marginBottom:"12px" }}>
-// // //                   <span style={{ fontSize:"13px" }}>🌿</span>
-// // //                   <span style={{ fontSize:"13px", color:"#6b8070" }}>Trust Score:</span>
-// // //                   <span style={{ fontSize:"13px", fontWeight:700, color:"#2d6a35" }}>{p.trustScore}%</span>
-// // //                 </div>
-// // //               )}
-
-// // //               {/* Price + Stock */}
-// // //               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px", marginBottom:"16px" }}>
-// // //                 <div>
-// // //                   <div style={{ fontSize:"11px", color:"#9b9b9b", marginBottom:"2px" }}>Price</div>
-// // //                   <div style={{ fontSize:"15px", fontWeight:700, color:"#1a3a2a" }}>Rs. {p.price}/kg</div>
-// // //                 </div>
-// // //                 <div>
-// // //                   <div style={{ fontSize:"11px", color:"#9b9b9b", marginBottom:"2px" }}>Stock</div>
-// // //                   <div style={{ fontSize:"15px", fontWeight:700, color:"#1a3a2a" }}>{p.stock} kg</div>
-// // //                 </div>
-// // //               </div>
-
-// // //               {/* Status + Actions */}
-// // //               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-// // //                 <span style={{
-// // //                   fontSize:"12px", fontWeight:700, padding:"4px 14px", borderRadius:"100px",
-// // //                   background: p.status === "Active" ? "#e8f5e9" : p.status === "Out of Stock" ? "#f4f0e8" : "#fce4ec",
-// // //                   color: p.status === "Active" ? "#2d6a35" : p.status === "Out of Stock" ? "#6b8070" : "#c62828",
-// // //                   border: p.status === "Active" ? "1px solid #c8e6c9" : p.status === "Out of Stock" ? "1px solid #e0ddd6" : "1px solid #f48fb1",
-// // //                 }}>
-// // //                   {p.status}
-// // //                 </span>
-// // //                 <div style={{ display:"flex", gap:"8px" }}>
-// // //                   <button
-// // //                     onClick={() => { setSelected(p); setModal("edit"); }}
-// // //                     style={{ width:"32px", height:"32px", borderRadius:"8px", border:"1px solid #e0ddd6", background:"white", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"15px" }}
-// // //                     title="Edit"
-// // //                   >✏️</button>
-// // //                   <button
-// // //                     onClick={() => handleDelete(p._id)}
-// // //                     disabled={deleting === p._id}
-// // //                     style={{ width:"32px", height:"32px", borderRadius:"8px", border:"1px solid #fcd0d0", background:"#fff5f5", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"15px" }}
-// // //                     title="Delete"
-// // //                   >🗑️</button>
-// // //                 </div>
-// // //               </div>
-// // //             </div>
-// // //           ))}
-// // //         </div>
-// // //       )}
-
-// // //       {/* Modal */}
-// // //       {(modal === "add" || modal === "edit") && (
-// // //         <ProductModal
-// // //           product={modal === "edit" ? selected : null}
-// // //           token={token}
-// // //           onClose={() => { setModal(null); setSelected(null); }}
-// // //           onSaved={() => fetchProducts(token)}
-// // //         />
-// // //       )}
-// // //     </div>
-// // //   );
-// // // }
-
-// // // "use client";
-
-// // // import { useState, useEffect } from "react";
-// // // import { useRouter } from "next/navigation";
-// // // import { productAPI } from "@/lib/axios-proxy";
-// // // import { usePathname } from "next/navigation";
-
-// // // // ── Types ──────────────────────────────────────────────────
-// // // interface Product {
-// // //   _id: string;
-// // //   cropName: string;
-// // //   category: string;
-// // //   type: string;
-// // //   price: number;
-// // //   stock: number;
-// // //   harvestDate?: string;
-// // //   organicTreatmentHistory?: string;
-// // //   trustScore: number;
-// // //   status: "Active" | "Out of Stock" | "Inactive";
-// // // }
-
-// // // const CATEGORIES = ["Leafy Green", "Root", "Fruit", "Grain", "Herb", "Other"];
-// // // const TYPES      = ["Organic", "Conventional"];
-
-// // // // const NAV = [
-// // // //   { icon: "🏠", label: "Overview",    href: "/dashboard/farmer",             section: "FARMING" },
-// // // //   { icon: "🔬", label: "Crop Doctor", href: "/dashboard/farmer/crop-doctor", section: ""        },
-// // // //   { icon: "🌾", label: "My Products", href: "/dashboard/farmer/products",    section: ""        },
-// // // //   { icon: "📦", label: "Orders",      href: "/dashboard/farmer/orders",      section: ""        },
-// // // //   { icon: "⛈️", label: "Weather",     href: "/dashboard/farmer/weather",     section: ""        },
-// // // // ];
 // // // const NAV = [
-// // //   { icon: "🏠", label: "Overview",    href: "/dashboard/farmer" },
-// // //   { icon: "🔬", label: "Crop Doctor", href: "/dashboard/farmer/crop-doctor" },
-// // //   { icon: "🌾", label: "My Products", href: "/dashboard/farmer/products" },
-// // //   { icon: "📦", label: "Orders",      href: "/dashboard/farmer/orders" },
-// // //   { icon: "⛈️", label: "Weather",     href: "/dashboard/farmer/weather" },
+// // //   { label: "Overview",    href: "/dashboard/farmer",             icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
+// // //   { label: "Crop Doctor", href: "/dashboard/farmer/crop-doctor", icon: "M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" },
+// // //   { label: "My Products", href: "/dashboard/farmer/products",    icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
+// // //   { label: "Orders",      href: "/dashboard/farmer/orders",      icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
+// // //   { label: "Weather",     href: "/dashboard/farmer/weather",     icon: "M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" },
+// // //   { label: "Earnings",    href: "/dashboard/farmer/earnings",    icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
 // // // ];
-// // // const CROP_ICONS: Record<string, string> = {
-// // //   "Leafy Green": "🥬", Root: "🥕", Fruit: "🍅",
-// // //   Grain: "🌾", Herb: "🌿", Other: "🌱",
-// // // };
 
-// // // const labelStyle: React.CSSProperties = {
-// // //   fontSize: "11px", fontWeight: 700, color: "#6b8070",
-// // //   textTransform: "uppercase", letterSpacing: "0.06em",
-// // //   display: "block", marginBottom: "6px",
-// // // };
-// // // const inputStyle: React.CSSProperties = {
-// // //   width: "100%", padding: "10px 14px",
-// // //   border: "1.5px solid #e0ddd6", borderRadius: "10px",
-// // //   fontFamily: "'DM Sans',sans-serif", fontSize: "14px",
-// // //   color: "#1a3a2a", background: "white", outline: "none",
-// // //   boxSizing: "border-box",
-// // // };
+// // // const CATEGORIES = ["All", "Vegetables", "Fruits", "Grains", "Herbs", "Other"];
+// // // const FILTERS    = ["All", "Active", "Out of Stock", "Inactive"];
 
-// // // // ── Image upload helper — sends multipart/form-data ────────
-// // // async function saveProduct(data: {
-// // //   cropName: string; category: string; type: string;
-// // //   price: string; stock: string; harvestDate: string;
-// // //   organicTreatmentHistory: string; imageFile: File | null;
-// // // }, productId?: string) {
-// // //   const form = new FormData();
-// // //   form.append("cropName",  data.cropName);
-// // //   form.append("category",  data.category);
-// // //   form.append("type",      data.type);
-// // //   form.append("price",     data.price);
-// // //   form.append("stock",     data.stock);
-// // //   if (data.harvestDate)             form.append("harvestDate",             data.harvestDate);
-// // //   if (data.organicTreatmentHistory) form.append("organicTreatmentHistory", data.organicTreatmentHistory);
-// // //   if (data.imageFile)               form.append("image", data.imageFile);
- 
-// // //   if (productId) {
-// // //     return api.put(`/products/${productId}`, form, {
-// // //       headers: { "Content-Type": "multipart/form-data" },
-// // //     });
-// // //   }
-// // //   return api.post("/products", form, {
-// // //     headers: { "Content-Type": "multipart/form-data" },
-// // //   });
-// // // }
+// // // const Icon = ({ d, size = 18, style }: { d: string; size?: number; style?: React.CSSProperties }) => (
+// // //   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+// // //     strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" style={style}>
+// // //     <path d={d} />
+// // //   </svg>
+// // // );
 
-// // // // ── Add / Edit Modal ───────────────────────────────────────
-// // // function ProductModal({
-// // //   product, onClose, onSaved,
-// // // }: {
-// // //   product: Product | null;
-// // //   onClose: () => void;
-// // //   onSaved: () => void;
-// // // }) {
-// // //   const isEdit = !!product;
-// // //   const [form, setForm] = useState({
-// // //     cropName:                product?.cropName                  || "",
-// // //     category:                product?.category                  || "",
-// // //     type:                    product?.type                      || "",
-// // //     price:                   product?.price?.toString()         || "",
-// // //     stock:                   product?.stock?.toString()         || "",
-// // //     harvestDate:             product?.harvestDate?.slice(0, 10) || "",
-// // //     organicTreatmentHistory: product?.organicTreatmentHistory   || "",
-// // //   });
-// // //   const [loading, setLoading] = useState(false);
-// // //   const [error,   setError]   = useState("");
-
-// // //   const set = (key: string, value: string) =>
-// // //     setForm(prev => ({ ...prev, [key]: value }));
-
-// // //   const handleSave = async () => {
-// // //     if (!form.cropName || !form.category || !form.type || !form.price || !form.stock) {
-// // //       setError("Please fill all required fields."); return;
-// // //     }
-// // //     setLoading(true); setError("");
-// // //     try {
-// // //       const body = {
-// // //         cropName:  form.cropName,
-// // //         category:  form.category,
-// // //         type:      form.type,
-// // //         price:     Number(form.price),
-// // //         stock:     Number(form.stock),
-// // //         harvestDate:             form.harvestDate             || undefined,
-// // //         organicTreatmentHistory: form.organicTreatmentHistory || undefined,
-// // //       };
-// // //       if (isEdit) {
-// // //         await productAPI.update(product!._id, body);
-// // //       } else {
-// // //         await productAPI.create(body);
-// // //       }
-// // //       onSaved();
-// // //       onClose();
-// // //     } catch (err: any) {
-// // //       setError(err.response?.data?.message || "Failed to save product.");
-// // //     } finally {
-// // //       setLoading(false);
-// // //     }
+// // // const StatusBadge = ({ s }: { s: string }) => {
+// // //   const map: Record<string, [string, string]> = {
+// // //     Active:   ["#dcfce7","#16a34a"], active: ["#dcfce7","#16a34a"],
+// // //     approved: ["#dcfce7","#16a34a"], Inactive: ["#fee2e2","#dc2626"],
+// // //     "Out of Stock": ["#fef9c3","#a16207"],
 // // //   };
-
+// // //   const [bg, col] = map[s] ?? ["#f3f4f6","#6b7280"];
 // // //   return (
-// // //     <div
-// // //       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", zIndex: 200,
-// // //         display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
-// // //       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-// // //     >
-// // //       <div style={{ background: "#f9f7f3", borderRadius: "18px", padding: "32px",
-// // //         width: "100%", maxWidth: "560px", maxHeight: "90vh", overflowY: "auto" }}>
-
-// // //         {/* Header */}
-// // //         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-// // //           <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#1a3a2a", margin: 0 }}>
-// // //             {isEdit ? "Edit Product" : "Add New Product"}
-// // //           </h2>
-// // //           <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: "#6b8070" }}>✕</button>
-// // //         </div>
-
-// // //         {error && (
-// // //           <div style={{ background: "#fff1f1", border: "1px solid #fcd0d0", borderRadius: "10px",
-// // //             padding: "10px 14px", color: "#c0392b", fontSize: "13px", marginBottom: "16px" }}>
-// // //             ⚠️ {error}
-// // //           </div>
-// // //         )}
-
-// // //          {/* ── Image Upload ── */}
-// // //         <div style={{ marginBottom: "20px" }}>
-// // //           <label style={labelStyle}>Product Image (optional)</label>
-// // //           <div
-// // //             onClick={() => fileInputRef.current?.click()}
-// // //             style={{
-// // //               border: "2px dashed #c8e6c9", borderRadius: "12px",
-// // //               padding: "16px", cursor: "pointer", textAlign: "center",
-// // //               background: imagePreview ? "#f0fdf4" : "#fff",
-// // //               transition: "all 0.2s",
-// // //               position: "relative", overflow: "hidden",
-// // //               minHeight: imagePreview ? "160px" : "100px",
-// // //               display: "flex", alignItems: "center", justifyContent: "center",
-// // //             }}
-// // //           >
-// // //             {imagePreview ? (
-// // //               <div style={{ position: "relative", width: "100%" }}>
-// // //                 <img
-// // //                   src={imagePreview} alt="preview"
-// // //                   style={{ maxHeight: "140px", maxWidth: "100%", objectFit: "contain", borderRadius: "8px" }}
-// // //                 />
-// // //                 <div style={{ position: "absolute", top: 4, right: 4, background: "#1a3a2a",
-// // //                   color: "#fff", borderRadius: "6px", padding: "3px 8px", fontSize: "11px", fontWeight: 700 }}>
-// // //                   Click to change
-// // //                 </div>
-// // //               </div>
-// // //             ) : (
-// // //               <div>
-// // //                 <div style={{ fontSize: "32px", marginBottom: "6px" }}>📷</div>
-// // //                 <div style={{ fontSize: "13px", color: "#6b8070", fontWeight: 600 }}>
-// // //                   Click to upload image
-// // //                 </div>
-// // //                 <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "4px" }}>
-// // //                   JPG, PNG or WebP · Max 5MB
-// // //                 </div>
-// // //               </div>
-// // //             )}
-// // //           </div>
-// // //           <input
-// // //             ref={fileInputRef}
-// // //             type="file"
-// // //             accept="image/jpeg,image/png,image/webp"
-// // //             onChange={handleImageChange}
-// // //             style={{ display: "none" }}
-// // //           />
-// // //           {imageFile && (
-// // //             <div style={{ fontSize: "11px", color: "#6b8070", marginTop: "4px" }}>
-// // //               📎 {imageFile.name} ({(imageFile.size / 1024).toFixed(0)} KB)
-// // //               <button
-// // //                 onClick={() => { setImageFile(null); setImagePreview(product?.imageUrl ? `http://localhost:5000${product.imageUrl}` : ""); }}
-// // //                 style={{ marginLeft: "8px", background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "11px" }}
-// // //               >Remove</button>
-// // //             </div>
-// // //           )}
-// // //         </div>
-
-// // //         {/* Form */}
-// // //         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
-// // //           <div>
-// // //             <label style={labelStyle}>Crop Name *</label>
-// // //             <input type="text" placeholder="e.g. Organic Spinach"
-// // //               value={form.cropName} onChange={e => set("cropName", e.target.value)} style={inputStyle} />
-// // //           </div>
-// // //           <div>
-// // //             <label style={labelStyle}>Category *</label>
-// // //             <select value={form.category} onChange={e => set("category", e.target.value)} style={inputStyle}>
-// // //               <option value="">Select</option>
-// // //               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-// // //             </select>
-// // //           </div>
-// // //           <div>
-// // //             <label style={labelStyle}>Price (Rs/kg) *</label>
-// // //             <input type="number" placeholder="150" min="1"
-// // //               value={form.price} onChange={e => set("price", e.target.value)} style={inputStyle} />
-// // //           </div>
-// // //           <div>
-// // //             <label style={labelStyle}>Stock (kg) *</label>
-// // //             <input type="number" placeholder="25" min="0"
-// // //               value={form.stock} onChange={e => set("stock", e.target.value)} style={inputStyle} />
-// // //           </div>
-// // //           <div>
-// // //             <label style={labelStyle}>Harvest Date</label>
-// // //             <input type="date"
-// // //               value={form.harvestDate} onChange={e => set("harvestDate", e.target.value)} style={inputStyle} />
-// // //           </div>
-// // //           <div>
-// // //             <label style={labelStyle}>Type *</label>
-// // //             <select value={form.type} onChange={e => set("type", e.target.value)} style={inputStyle}>
-// // //               <option value="">Select</option>
-// // //               {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-// // //             </select>
-// // //           </div>
-// // //         </div>
-
-// // //         <div style={{ marginBottom: "24px" }}>
-// // //           <label style={labelStyle}>Organic Treatment History (optional)</label>
-// // //           <textarea placeholder="Describe treatments used..."
-// // //             value={form.organicTreatmentHistory}
-// // //             onChange={e => set("organicTreatmentHistory", e.target.value)}
-// // //             rows={3}
-// // //             style={{ ...inputStyle, resize: "vertical", height: "auto" }}
-// // //           />
-// // //         </div>
-
-// // //         <button onClick={handleSave} disabled={loading} style={{
-// // //           width: "100%", padding: "13px",
-// // //           background: loading ? "#a8d5b5" : "linear-gradient(135deg,#1a3a2a,#2d5a3d)",
-// // //           color: "white", border: "none", borderRadius: "10px",
-// // //           fontFamily: "'DM Sans',sans-serif", fontSize: "15px", fontWeight: 700,
-// // //           cursor: loading ? "not-allowed" : "pointer",
-// // //         }}>
-// // //           {loading ? "Saving…" : isEdit ? "Save Changes" : "List Product"}
-// // //         </button>
-// // //       </div>
-// // //     </div>
+// // //     <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 99, background: bg, color: col }}>
+// // //       {s === "approved" ? "Active" : s}
+// // //     </span>
 // // //   );
-// // // }
+// // // };
 
-// // // // ── Main Page ──────────────────────────────────────────────
-// // // export default function MyProductsPage() {
+// // // export default function ProductsPage() {
 // // //   const router = useRouter();
-// // //   const [user, setUser]         = useState<{ name: string } | null>(null);
-// // //   const [products, setProducts] = useState<Product[]>([]);
-// // //   const [loading, setLoading]   = useState(true);
-// // //   const [search, setSearch]     = useState("");
-// // //   const [modal, setModal]       = useState<"add" | "edit" | null>(null);
-// // //   const [selected, setSelected] = useState<Product | null>(null);
-// // //   const [deleting, setDeleting] = useState<string | null>(null);
-// // //   const [error, setError]       = useState("");
-// // //    const pathname = usePathname()
-// // // //   const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
 
-// // //   // ── Auth guard ─────────────────────────────────────────
+// // //   const [user,          setUser]          = useState<User | null>(null);
+// // //   const [profile,       setProfile]       = useState<Profile | null>(null);
+// // //   const [sub,           setSub]           = useState<any>(null);
+// // //   const [products,      setProducts]      = useState<Product[]>([]);
+// // //   const [loading,       setLoading]       = useState(true);
+// // //   const [sideCollapsed, setSideCollapsed] = useState(false);
+// // //   const [search,        setSearch]        = useState("");
+// // //   const [filter,        setFilter]        = useState("All");
+// // //   const [catFilter,     setCatFilter]     = useState("All");
+// // //   const [showAdd,       setShowAdd]       = useState(false);
+// // //   const [showEdit,      setShowEdit]      = useState<Product | null>(null);
+// // //   const [saving,        setSaving]        = useState(false);
+// // //   const [deleting,      setDeleting]      = useState<string | null>(null);
+// // //   const [toast,         setToast]         = useState("");
+
+// // //   const blankForm = { cropName: "", category: "Vegetables", price: "", stock: "", description: "", unit: "kg", imageUrl: "" };
+// // //   const [form, setForm] = useState(blankForm);
+// // //   const fileRef = useRef<HTMLInputElement>(null);
+
+// // //   const SBW = sideCollapsed ? 68 : 220;
+
+// // //   const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; };
+// // //   const getInitial = () => (user?.name || "F")[0].toUpperCase();
+
 // // //   useEffect(() => {
 // // //     const stored = localStorage.getItem("agriai_user");
 // // //     const token  = localStorage.getItem("agriai_token");
 // // //     if (!stored || !token) { router.push("/"); return; }
 // // //     const u = JSON.parse(stored);
-// // //     if (u.role !== "farmer" && u.role !== "admin") { router.push("/"); return; }
 // // //     setUser(u);
-// // //     fetchProducts();
+// // //     loadData(u);
 // // //   }, []);
 
-// // //   // ── Fetch products via productAPI ──────────────────────
-// // //   const fetchProducts = async () => {
-// // //     setLoading(true); setError("");
+// // //   const loadData = async (u: User) => {
 // // //     try {
-// // //       const { data } = await productAPI.getMyProducts();
-// // //       // Backend may return array or { products: [...] }
-// // //       setProducts(Array.isArray(data) ? data : data.products || []);
-// // //     } catch (err: any) {
-// // //       setError(err.response?.data?.message || "Failed to load products. Is the backend running?");
-// // //     } finally {
-// // //       setLoading(false);
-// // //     }
+// // //       const [profR, prodR, subR] = await Promise.allSettled([
+// // //         profileAPI.getMe(),
+// // //         productAPI.getMyProducts(),
+// // //         api.get("/subscriptions/my"),
+// // //       ]);
+// // //       if (profR.status === "fulfilled") setProfile({ farmName: profR.value.data.farmName || "", district: profR.value.data.district || "" });
+// // //       if (prodR.status === "fulfilled") {
+// // //         const raw = prodR.value.data?.products || prodR.value.data || [];
+// // //         setProducts(Array.isArray(raw) ? raw : []);
+// // //       }
+// // //       if (subR.status === "fulfilled") setSub(subR.value.data);
+// // //     } catch { }
+// // //     setLoading(false);
 // // //   };
 
-// // //   // ── Delete via productAPI ──────────────────────────────
+// // //   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 3000); };
+
+// // //   const handleSave = async () => {
+// // //     if (!form.cropName || !form.price || !form.stock) return;
+// // //     setSaving(true);
+// // //     try {
+// // //       if (showEdit) {
+// // //         await productAPI.update(showEdit._id, { cropName: form.cropName, category: form.category, price: Number(form.price), stock: Number(form.stock), description: form.description, unit: form.unit });
+// // //         setProducts(prev => prev.map(p => p._id === showEdit._id ? { ...p, ...form, price: Number(form.price), stock: Number(form.stock) } : p));
+// // //         showToast("Product updated!");
+// // //       } else {
+// // //         const { data } = await productAPI.create({ cropName: form.cropName, category: form.category, price: Number(form.price), stock: Number(form.stock), description: form.description, unit: form.unit });
+// // //         setProducts(prev => [...prev, data.product || data]);
+// // //         showToast("Product added!");
+// // //       }
+// // //       setShowAdd(false); setShowEdit(null); setForm(blankForm);
+// // //     } catch (e: any) { showToast(e.response?.data?.message || "Error saving product"); }
+// // //     setSaving(false);
+// // //   };
+
 // // //   const handleDelete = async (id: string) => {
-// // //     if (!confirm("Delete this product? This cannot be undone.")) return;
 // // //     setDeleting(id);
 // // //     try {
 // // //       await productAPI.remove(id);
 // // //       setProducts(prev => prev.filter(p => p._id !== id));
-// // //     } catch (err: any) {
-// // //       alert(err.response?.data?.message || "Delete failed.");
-// // //     } finally {
-// // //       setDeleting(null);
-// // //     }
+// // //       showToast("Product deleted.");
+// // //     } catch { showToast("Failed to delete."); }
+// // //     setDeleting(null);
 // // //   };
 
-// // //   const handleLogout = () => {
-// // //     localStorage.removeItem("agriai_token");
-// // //     localStorage.removeItem("agriai_user");
-// // //     router.push("/");
-// // //   };
+// // //   const handleLogout = () => { localStorage.removeItem("agriai_token"); localStorage.removeItem("agriai_user"); router.push("/"); };
 
-// // //   const filtered = products.filter(p =>
-// // //     p.cropName.toLowerCase().includes(search.toLowerCase())
+// // //   const filtered = products.filter(p => {
+// // //     const matchSearch = p.cropName.toLowerCase().includes(search.toLowerCase());
+// // //     const matchFilter = filter === "All" || (filter === "Active" && (p.status === "Active" || p.status === "approved")) || (filter === "Out of Stock" && p.stock === 0) || p.status === filter;
+// // //     const matchCat    = catFilter === "All" || p.category === catFilter;
+// // //     return matchSearch && matchFilter && matchCat;
+// // //   });
+
+// // //   const totalProducts   = products.length;
+// // //   const activeListings  = products.filter(p => p.status === "Active" || p.status === "approved").length;
+// // //   const outOfStock      = products.filter(p => p.stock === 0).length;
+// // //   const inventoryValue  = products.reduce((a, p) => a + p.price * p.stock, 0);
+
+// // //   if (loading) return (
+// // //     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f4f0e8", fontFamily: "'DM Sans',sans-serif" }}>
+// // //       <div style={{ textAlign: "center" }}>
+// // //         <div style={{ width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#1a3a2a,#6aaa78)", margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+// // //           <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={22} style={{ color: "#fff" }} />
+// // //         </div>
+// // //         <div style={{ color: "#2d5a3d", fontWeight: 700, fontSize: 15 }}>Loading products…</div>
+// // //       </div>
+// // //     </div>
 // // //   );
 
-// // //   const getInitial = () => (user?.name || "F")[0].toUpperCase();
-
 // // //   return (
-// // //     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'DM Sans',sans-serif", background: "#f4f0e8" }}>
+// // //     <>
+// // //       <style>{`
+// // //         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+// // //         *{box-sizing:border-box;margin:0;padding:0;}
+// // //         body{font-family:'DM Sans',sans-serif;background:#f2efe8;}
+// // //         ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:#d0cdc6;border-radius:10px;}
+// // //         .nav-btn:hover{background:rgba(106,170,120,.15)!important;color:#fff!important;}
+// // //         .action-btn:hover{opacity:.88;}
+// // //         .prod-card:hover{box-shadow:0 12px 36px rgba(26,58,42,.13)!important;transform:translateY(-3px);}
+// // //         .filter-chip:hover{background:#e8f5e9!important;color:#1a3a2a!important;}
+// // //         input:focus,textarea:focus,select:focus{outline:none;border-color:#6aaa78!important;box-shadow:0 0 0 3px rgba(106,170,120,.15);}
+// // //         @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+// // //         .fade-up{animation:fadeUp .32s ease both;}
+// // //         @keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+// // //         .slide-in{animation:slideIn .28s ease both;}
+// // //         @keyframes toastIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+// // //         .toast{animation:toastIn .25s ease both;}
+// // //       `}</style>
 
-// // //       {/* ══ SIDEBAR ══ */}
-// // //       <aside style={{ width: 190, background: "linear-gradient(180deg,#1a3a2a 0%,#0f2418 100%)",
-// // //         display: "flex", flexDirection: "column", position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 50 }}>
+// // //       <div style={{ display: "flex", minHeight: "100vh", background: "#f2efe8" }}>
 
-// // //         <div style={{ padding: "22px 20px 16px", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
-// // //           <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 900, fontSize: 22, color: "#fff" }}>
-// // //             Agri<span style={{ color: "#6aaa78" }}>AI</span>
-// // //           </div>
-// // //         </div>
-
-// // //         <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
-// // //           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-// // //             <div style={{ width: 38, height: 38, borderRadius: "50%", background: "#6aaa78",
-// // //               display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#fff" }}>
-// // //               {getInitial()}
-// // //             </div>
-// // //             <div>
-// // //               <div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{user?.name || "Farmer"}</div>
-// // //               <div style={{ color: "rgba(255,255,255,.45)", fontSize: 11 }}>My Farm</div>
-// // //             </div>
-// // //           </div>
-// // //         </div>
-
-        
-// // //         <nav style={{ flex:1, padding:"12px 0", overflowY:"auto" }}>
-// // //   {NAV.map((item, i) => {
-// // //     const isActive = pathname === item.href;
-
-// // //     return (
-// // //       <div key={item.href}>
-// // //         <button
-// // //           onClick={() => router.push(item.href)}
-// // //           style={{
-// // //             width:"100%", display:"flex", alignItems:"center", gap:10,
-// // //             padding:"10px 20px", border:"none",
-// // //             background: isActive ? "rgba(106,170,120,.2)" : "transparent",
-// // //             borderLeft: isActive ? "3px solid #6aaa78" : "3px solid transparent",
-// // //             color: isActive ? "#fff" : "rgba(255,255,255,.55)",
-// // //             fontSize:13, fontWeight: isActive ? 600 : 400,
-// // //             cursor:"pointer", transition:"all .2s", textAlign:"left",
-// // //           }}
-// // //         >
-// // //           <span>{item.icon}</span>{item.label}
-// // //         </button>
-// // //       </div>
-// // //     );
-// // //   })}
-// // // </nav>
-
-// // //         <div style={{ padding: "12px 0", borderTop: "1px solid rgba(255,255,255,.08)" }}>
-// // //           <a href="/dashboard/farmer/settings" style={{ display: "flex", alignItems: "center", gap: 10,
-// // //             padding: "10px 20px", textDecoration: "none", color: "rgba(255,255,255,.45)", fontSize: 13 }}>
-// // //             ⚙️ Settings
-// // //           </a>
-// // //           <button onClick={handleLogout} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10,
-// // //             padding: "10px 20px", border: "none", background: "transparent",
-// // //             color: "#ef4444", fontSize: 13, cursor: "pointer", fontWeight: 600 }}>
-// // //             🚪 Sign Out
-// // //           </button>
-// // //         </div>
-// // //       </aside>
-
-// // //       {/* ══ MAIN ══ */}
-// // //       <main style={{ marginLeft: 190, flex: 1, padding: "28px 32px" }}>
-
-// // //         {/* Page header */}
-// // //         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
-// // //           <div>
-// // //             <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#1a3a2a", margin: 0 }}>My Products</h1>
-// // //             <p style={{ fontSize: "14px", color: "#6b8070", marginTop: "4px" }}>
-// // //               Manage your produce listings · {products.length} product{products.length !== 1 ? "s" : ""}
-// // //             </p>
-// // //           </div>
-// // //           <button
-// // //             onClick={() => { setSelected(null); setModal("add"); }}
-// // //             style={{ display: "flex", alignItems: "center", gap: "8px", padding: "11px 20px",
-// // //               background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", color: "white", border: "none",
-// // //               borderRadius: "100px", fontFamily: "'DM Sans',sans-serif", fontSize: "14px",
-// // //               fontWeight: 600, cursor: "pointer" }}
-// // //           >
-// // //             + Add Product
-// // //           </button>
-// // //         </div>
-
-// // //         {/* Search */}
-// // //         <div style={{ marginBottom: "24px", position: "relative", maxWidth: "420px" }}>
-// // //           <span style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", fontSize: "16px" }}>🔍</span>
-// // //           <input type="text" placeholder="Search products…"
-// // //             value={search} onChange={e => setSearch(e.target.value)}
-// // //             style={{ width: "100%", padding: "11px 14px 11px 42px", border: "1.5px solid #e0ddd6",
-// // //               borderRadius: "12px", fontFamily: "'DM Sans',sans-serif", fontSize: "14px",
-// // //               background: "white", outline: "none", boxSizing: "border-box" }}
-// // //           />
-// // //         </div>
-
-// // //         {/* Error banner */}
-// // //         {error && (
-// // //           <div style={{ background: "#fff1f1", border: "1px solid #fcd0d0", borderRadius: "12px",
-// // //             padding: "14px 18px", color: "#c0392b", fontSize: "14px", marginBottom: "20px",
-// // //             display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-// // //             <span>⚠️ {error}</span>
-// // //             <button onClick={fetchProducts} style={{ background: "#1a3a2a", color: "#fff", border: "none",
-// // //               borderRadius: "8px", padding: "6px 14px", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
-// // //               Retry
+// // //         {/* ══ SIDEBAR ══ */}
+// // //         <aside style={{
+// // //           width: SBW, background: "linear-gradient(185deg,#1a3a2a 0%,#122a1c 60%,#0a1e11 100%)",
+// // //           display: "flex", flexDirection: "column", position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 60,
+// // //           transition: "width .28s cubic-bezier(.4,0,.2,1)", overflow: "hidden",
+// // //           boxShadow: "4px 0 24px rgba(0,0,0,.18)",
+// // //         }}>
+// // //           {/* Logo */}
+// // //           <div style={{ padding: sideCollapsed ? "18px 0" : "20px 20px 16px", borderBottom: "1px solid rgba(255,255,255,.07)", display: "flex", alignItems: "center", justifyContent: sideCollapsed ? "center" : "space-between" }}>
+// // //             {!sideCollapsed && (
+// // //               <div onClick={() => router.push("/")} style={{ fontFamily: "'Playfair Display',serif", fontWeight: 900, fontSize: 22, color: "#fff", cursor: "pointer", letterSpacing: "-0.5px" }}
+// // //                 onMouseEnter={e => (e.currentTarget.style.opacity = "0.75")} onMouseLeave={e => (e.currentTarget.style.opacity = "1")}>
+// // //                 Ag<span style={{ color: "#6aaa78" }}>real</span>
+// // //               </div>
+// // //             )}
+// // //             <button onClick={() => setSideCollapsed(p => !p)} className="action-btn"
+// // //               style={{ background: "rgba(255,255,255,.07)", border: "none", borderRadius: 8, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,.5)", flexShrink: 0 }}>
+// // //               <Icon d={sideCollapsed ? "M13 5l7 7-7 7M5 5l7 7-7 7" : "M11 19l-7-7 7-7m8 14l-7-7 7-7"} size={14} />
 // // //             </button>
 // // //           </div>
-// // //         )}
-
-// // //         {/* Products grid */}
-// // //         {loading ? (
-// // //           <div style={{ textAlign: "center", padding: "80px", color: "#6b8070" }}>
-// // //             <div style={{ fontSize: 36, marginBottom: 12 }}>🌾</div>
-// // //             <div style={{ fontWeight: 600 }}>Loading products…</div>
-// // //           </div>
-// // //         ) : filtered.length === 0 ? (
-// // //           <div style={{ textAlign: "center", padding: "80px", color: "#c0bdb5" }}>
-// // //             <div style={{ fontSize: "52px", marginBottom: "14px" }}>🌱</div>
-// // //             <div style={{ fontSize: "16px", color: "#6b8070", fontWeight: 500 }}>
-// // //               {search ? `No products match "${search}"` : "No products yet. Click + Add Product to start selling."}
+// // //           {/* User card */}
+// // //           <div style={{ padding: sideCollapsed ? "14px 0" : "14px 16px", borderBottom: "1px solid rgba(255,255,255,.07)", display: sideCollapsed ? "flex" : "block", justifyContent: "center" }}>
+// // //             <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: sideCollapsed ? "center" : "flex-start" }}>
+// // //               <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6aaa78,#2d5a3d)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#fff", border: "2px solid rgba(255,255,255,.15)", flexShrink: 0 }}>
+// // //                 {getInitial()}
+// // //               </div>
+// // //               {!sideCollapsed && (
+// // //                 <div>
+// // //                   <div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{user?.name || "Farmer"}</div>
+// // //                   <div style={{ color: "rgba(255,255,255,.4)", fontSize: 10 }}>{profile?.farmName || "My Farm"}</div>
+// // //                   {sub?.isActive && (
+// // //                     <div style={{ marginTop: 4, display: "inline-flex", alignItems: "center", gap: 3, background: "rgba(106,170,120,.25)", borderRadius: 99, padding: "1px 8px", fontSize: 9, color: "#6aaa78", fontWeight: 700 }}>
+// // //                       <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#6aaa78", display: "inline-block" }} />
+// // //                       {sub.status === "trialing" ? "Free Trial" : "Active"}
+// // //                     </div>
+// // //                   )}
+// // //                 </div>
+// // //               )}
 // // //             </div>
 // // //           </div>
-// // //         ) : (
-// // //           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "18px" }}>
-// // //             {filtered.map(p => (
-// // //               <div key={p._id} style={{ background: "white", borderRadius: "16px", padding: "22px",
-// // //                 border: "1px solid #e8e4dc", position: "relative",
-// // //                 boxShadow: "0 2px 10px rgba(0,0,0,.05)" }}>
+// // //           {/* Nav */}
+// // //           <nav style={{ flex: 1, padding: "10px 0", overflowY: "auto" }}>
+// // //             {!sideCollapsed && <div style={{ padding: "10px 16px 4px", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.25)", textTransform: "uppercase", letterSpacing: ".1em" }}>Navigation</div>}
+// // //             {NAV.map(item => {
+// // //               const active = item.href === "/dashboard/farmer/products";
+// // //               return (
+// // //                 <button key={item.href} onClick={() => router.push(item.href)} className="nav-btn"
+// // //                   title={sideCollapsed ? item.label : undefined}
+// // //                   style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: sideCollapsed ? "12px 0" : "9px 16px", justifyContent: sideCollapsed ? "center" : "flex-start", border: "none", background: active ? "rgba(106,170,120,.18)" : "transparent", borderLeft: active ? "3px solid #6aaa78" : "3px solid transparent", color: active ? "#fff" : "rgba(255,255,255,.5)", fontSize: 13, fontWeight: active ? 600 : 400, cursor: "pointer", transition: "all .18s", textAlign: "left" }}>
+// // //                   <Icon d={item.icon} size={17} style={{ flexShrink: 0 }} />
+// // //                   {!sideCollapsed && <span>{item.label}</span>}
+// // //                   {!sideCollapsed && active && <div style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: "#6aaa78" }} />}
+// // //                 </button>
+// // //               );
+// // //             })}
+// // //           </nav>
+// // //           {/* Bottom */}
+// // //           <div style={{ padding: "10px 0", borderTop: "1px solid rgba(255,255,255,.07)" }}>
+// // //             <button onClick={() => router.push("/dashboard/farmer/settings")} className="nav-btn" title={sideCollapsed ? "Settings" : undefined}
+// // //               style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, justifyContent: sideCollapsed ? "center" : "flex-start", padding: sideCollapsed ? "11px 0" : "9px 16px", border: "none", background: "transparent", color: "rgba(255,255,255,.4)", fontSize: 13, cursor: "pointer", transition: "all .18s" }}>
+// // //               <Icon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" size={16} style={{ flexShrink: 0 }} />
+// // //               {!sideCollapsed && <span>Settings</span>}
+// // //             </button>
+// // //             <button onClick={handleLogout} className="nav-btn" title={sideCollapsed ? "Sign Out" : undefined}
+// // //               style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, justifyContent: sideCollapsed ? "center" : "flex-start", padding: sideCollapsed ? "11px 0" : "9px 16px", border: "none", background: "transparent", color: "#f87171", fontSize: 13, cursor: "pointer", fontWeight: 600, transition: "all .18s" }}>
+// // //               <Icon d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" size={16} style={{ flexShrink: 0 }} />
+// // //               {!sideCollapsed && <span>Sign Out</span>}
+// // //             </button>
+// // //           </div>
+// // //         </aside>
 
-// // //                    {/* ── Product Image ── */}
-// // //                 <div style={{ height: "140px", background: "#f0fdf4",
-// // //                   display: "flex", alignItems: "center", justifyContent: "center",
-// // //                   overflow: "hidden", position: "relative" }}>
-// // //                   {p.imageUrl ? (
-// // //                     <img
-// // //                       src={`http://localhost:5000${p.imageUrl}`}
-// // //                       alt={p.cropName}
-// // //                       style={{ width: "100%", height: "100%", objectFit: "cover" }}
-// // //                       onError={e => {
-// // //                         (e.target as HTMLImageElement).style.display = "none";
-// // //                         (e.target as HTMLImageElement).nextElementSibling?.setAttribute("style", "display:flex");
-// // //                       }}
-// // //                     />
-// // //                   ) : null}
-// // //                   <div style={{
-// // //                     display: p.imageUrl ? "none" : "flex",
-// // //                     alignItems: "center", justifyContent: "center",
-// // //                     width: "100%", height: "100%",
-// // //                     fontSize: "52px",
-// // //                   }}>
-// // //                     {CROP_ICONS[p.category] || "🌱"}
-// // //                   </div>
+// // //         {/* ══ MAIN ══ */}
+// // //         <main style={{ marginLeft: SBW, flex: 1, display: "flex", flexDirection: "column", transition: "margin-left .28s cubic-bezier(.4,0,.2,1)", minHeight: "100vh" }}>
 
-// // //                 {/* Organic badge */}
-// // //                 {p.type === "Organic" && (
-// // //                   <div style={{ position: "absolute", top: "16px", right: "16px", background: "#e8f5e9",
-// // //                     color: "#2d6a35", fontSize: "11px", fontWeight: 700, padding: "3px 10px",
-// // //                     borderRadius: "100px" }}>
-// // //                     🌿 Organic
-// // //                   </div>
-// // //                 )}
-
-// // //                 {/* Crop name */}
-// // //                 <div style={{ marginBottom: "14px" }}>
-// // //                   <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-// // //                     <span style={{ fontSize: "22px" }}>{CROP_ICONS[p.category] || "🌱"}</span>
-// // //                     <span style={{ fontSize: "16px", fontWeight: 700, color: "#1a3a2a" }}>{p.cropName}</span>
-// // //                   </div>
-// // //                   <div style={{ fontSize: "13px", color: "#6b8070", marginLeft: "30px" }}>{p.category}</div>
+// // //           {/* Topbar */}
+// // //           <header style={{ background: "rgba(255,255,255,.92)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(0,0,0,.07)", padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 40 }}>
+// // //             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+// // //               <button onClick={() => router.back()} className="action-btn"
+// // //                 style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, background: "#f4f0e8", border: "1px solid #e0ddd6", cursor: "pointer", flexShrink: 0 }}>
+// // //                 <Icon d="M15 19l-7-7 7-7" size={16} style={{ color: "#1a3a2a" }} />
+// // //               </button>
+// // //               <div>
+// // //                 <div style={{ fontSize: 19, fontWeight: 700, color: "#1c2b22", letterSpacing: "-.3px" }}>
+// // //                   {greeting()}, <span style={{ color: "#2d5a3d" }}>{user?.name?.split(" ")[0]}</span>
 // // //                 </div>
-
-// // //                 {/* Trust score */}
-// // //                 {p.trustScore > 0 && (
-// // //                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
-// // //                     <span style={{ fontSize: "13px" }}>⭐</span>
-// // //                     <span style={{ fontSize: "13px", color: "#6b8070" }}>Trust Score:</span>
-// // //                     <span style={{ fontSize: "13px", fontWeight: 700, color: "#2d5a3d" }}>{p.trustScore}%</span>
-// // //                   </div>
-// // //                 )}
-
-// // //                 {/* Price + Stock */}
-// // //                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
-// // //                   <div>
-// // //                     <div style={{ fontSize: "11px", color: "#9b9b9b", marginBottom: "2px" }}>Price</div>
-// // //                     <div style={{ fontSize: "15px", fontWeight: 700, color: "#1a3a2a" }}>Rs. {p.price}/kg</div>
-// // //                   </div>
-// // //                   <div>
-// // //                     <div style={{ fontSize: "11px", color: "#9b9b9b", marginBottom: "2px" }}>Stock</div>
-// // //                     <div style={{ fontSize: "15px", fontWeight: 700, color: p.stock === 0 ? "#ef4444" : "#1a3a2a" }}>
-// // //                       {p.stock} kg
-// // //                     </div>
-// // //                   </div>
-// // //                 </div>
-
-// // //                 {/* Harvest date */}
-// // //                 {p.harvestDate && (
-// // //                   <div style={{ fontSize: "12px", color: "#6b8070", marginBottom: "12px" }}>
-// // //                     🗓 {new Date(p.harvestDate).toLocaleDateString("en-CA")}
-// // //                   </div>
-// // //                 )}
-
-// // //                 {/* Status + Actions */}
-// // //                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-// // //                   <span style={{
-// // //                     fontSize: "12px", fontWeight: 700, padding: "4px 14px", borderRadius: "100px",
-// // //                     background: p.status === "Active" ? "#e8f5e9" : p.status === "Out of Stock" ? "#f4f0e8" : "#fce4ec",
-// // //                     color:      p.status === "Active" ? "#2d6a35" : p.status === "Out of Stock" ? "#6b8070" : "#c62828",
-// // //                     border:     p.status === "Active" ? "1px solid #c8e6c9" : p.status === "Out of Stock" ? "1px solid #e0ddd6" : "1px solid #f48fb1",
-// // //                   }}>
-// // //                     {p.status}
-// // //                   </span>
-// // //                   <div style={{ display: "flex", gap: "8px" }}>
-// // //                     <button onClick={() => { setSelected(p); setModal("edit"); }}
-// // //                       title="Edit"
-// // //                       style={{ width: "32px", height: "32px", borderRadius: "8px",
-// // //                         border: "1px solid #e0ddd6", background: "white", cursor: "pointer",
-// // //                         display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px" }}>
-// // //                       ✏️
-// // //                     </button>
-// // //                     <button onClick={() => handleDelete(p._id)} disabled={deleting === p._id}
-// // //                       title="Delete"
-// // //                       style={{ width: "32px", height: "32px", borderRadius: "8px",
-// // //                         border: "1px solid #fcd0d0", background: "#fff5f5", cursor: "pointer",
-// // //                         display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px",
-// // //                         opacity: deleting === p._id ? 0.5 : 1 }}>
-// // //                       🗑️
-// // //                     </button>
-// // //                   </div>
+// // //                 <div style={{ fontSize: 12, color: "#9b9590", marginTop: 2 }}>
+// // //                   {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+// // //                   {profile?.district ? ` · ${profile.district}` : ""}
 // // //                 </div>
 // // //               </div>
-// // //             ))}
-// // //           </div>
-// // //         )}
-// // //       </main>
+// // //             </div>
+// // //             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+// // //               {/* Search */}
+// // //               <div style={{ position: "relative" }}>
+// // //                 <Icon d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" size={15} style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "#9b9590" }} />
+// // //                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search crops…"
+// // //                   style={{ paddingLeft: 34, paddingRight: 14, height: 36, border: "1px solid #e0ddd6", borderRadius: 9, background: "#f9f7f4", fontSize: 13, color: "#1a3a2a", width: 200, fontFamily: "'DM Sans',sans-serif" }} />
+// // //               </div>
+// // //               {/* Add Product */}
+// // //               <button onClick={() => { setShowAdd(true); setShowEdit(null); setForm(blankForm); }} className="action-btn"
+// // //                 style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 4px 14px rgba(26,58,42,.25)" }}>
+// // //                 <Icon d="M12 4v16m8-8H4" size={15} />
+// // //                 Add Product
+// // //               </button>
+// // //               {/* Avatar */}
+// // //               <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6aaa78,#2d5a3d)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 15, border: "2px solid rgba(255,255,255,.8)", boxShadow: "0 2px 8px rgba(45,90,61,.3)", cursor: "pointer" }}>
+// // //                 {getInitial()}
+// // //               </div>
+// // //             </div>
+// // //           </header>
 
-// // //       {/* Modal */}
-// // //       {(modal === "add" || modal === "edit") && (
-// // //         <ProductModal
-// // //           product={modal === "edit" ? selected : null}
-// // //           onClose={() => { setModal(null); setSelected(null); }}
-// // //           onSaved={fetchProducts}
-// // //         />
+// // //           {/* Body */}
+// // //           <div style={{ padding: "28px 32px", flex: 1 }}>
+
+// // //             {/* Stat cards */}
+// // //             <div className="fade-up" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 28 }}>
+// // //               {[
+// // //                 { label: "Total Products", value: totalProducts, sub: "Listed crops", dot: "#6aaa78" },
+// // //                 { label: "Active Listings", value: activeListings, sub: "Selling now", dot: "#6aaa78" },
+// // //                 { label: "Out of Stock",    value: outOfStock,    sub: "Need restocking", dot: "#f59e0b" },
+// // //                 { label: "Inventory Value", value: `Rs.${(inventoryValue/1000).toFixed(1)}K`, sub: "Est. total value", dot: "#3b82f6" },
+// // //               ].map(s => (
+// // //                 <div key={s.label} style={{ background: "#fff", borderRadius: 16, padding: "20px 22px", border: "1px solid #eeebe4", boxShadow: "0 2px 8px rgba(0,0,0,.04)", position: "relative" }}>
+// // //                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+// // //                     <div style={{ width: 7, height: 7, borderRadius: "50%", background: s.dot }} />
+// // //                     <div style={{ fontSize: 11, fontWeight: 700, color: "#a09a90", textTransform: "uppercase", letterSpacing: ".07em" }}>{s.label}</div>
+// // //                   </div>
+// // //                   <div style={{ fontSize: 32, fontWeight: 800, color: "#1c2b22", fontFamily: "'Playfair Display',serif", lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
+// // //                   <div style={{ fontSize: 12, color: "#9b9590" }}>{s.sub}</div>
+// // //                 </div>
+// // //               ))}
+// // //             </div>
+
+// // //             {/* Filters row */}
+// // //             <div className="fade-up" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+// // //               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+// // //                 {FILTERS.map(f => (
+// // //                   <button key={f} onClick={() => setFilter(f)} className="filter-chip"
+// // //                     style={{ padding: "7px 16px", borderRadius: 99, border: "1.5px solid", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all .18s", background: filter === f ? "#1a3a2a" : "#fff", color: filter === f ? "#fff" : "#6b8070", borderColor: filter === f ? "#1a3a2a" : "#e0ddd6" }}>
+// // //                     {f}
+// // //                   </button>
+// // //                 ))}
+// // //               </div>
+// // //               <div style={{ fontSize: 13, color: "#9b9590", fontWeight: 500 }}>{filtered.length} result{filtered.length !== 1 ? "s" : ""}</div>
+// // //             </div>
+
+// // //             {/* Product grid */}
+// // //             {filtered.length === 0 ? (
+// // //               <div className="fade-up" style={{ textAlign: "center", padding: "80px 20px" }}>
+// // //                 <div style={{ width: 72, height: 72, borderRadius: 20, background: "linear-gradient(135deg,#f4f0e8,#eef5ec)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+// // //                   <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={30} style={{ color: "#9b9590" }} />
+// // //                 </div>
+// // //                 <div style={{ fontSize: 18, fontWeight: 700, color: "#1c2b22", marginBottom: 8 }}>No products found</div>
+// // //                 <div style={{ fontSize: 14, color: "#9b9590", marginBottom: 24 }}>Add your first crop to start selling</div>
+// // //                 <button onClick={() => { setShowAdd(true); setForm(blankForm); }} className="action-btn"
+// // //                   style={{ padding: "11px 24px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+// // //                   + Add Product
+// // //                 </button>
+// // //               </div>
+// // //             ) : (
+// // //               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 20 }}>
+// // //                 {filtered.map((p, i) => (
+// // //                   <div key={p._id} className="prod-card fade-up"
+// // //                     style={{ background: "#fff", borderRadius: 18, border: "1px solid #eeebe4", overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,.05)", transition: "all .22s", animationDelay: `${i * 0.04}s` }}>
+// // //                     {/* Image */}
+// // //                     <div style={{ height: 160, background: "linear-gradient(135deg,#e8f5e9,#f4f0e8)", position: "relative", overflow: "hidden" }}>
+// // //                       {p.imageUrl ? (
+// // //                         <img src={p.imageUrl} alt={p.cropName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+// // //                       ) : (
+// // //                         <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+// // //                           <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={36} style={{ color: "#9b9590" }} />
+// // //                         </div>
+// // //                       )}
+// // //                       {/* Status dot */}
+// // //                       <div style={{ position: "absolute", top: 10, right: 10 }}>
+// // //                         <StatusBadge s={p.status} />
+// // //                       </div>
+// // //                     </div>
+// // //                     {/* Info */}
+// // //                     <div style={{ padding: "16px 18px" }}>
+// // //                       <div style={{ fontSize: 16, fontWeight: 700, color: "#1c2b22", marginBottom: 2 }}>{p.cropName}</div>
+// // //                       <div style={{ fontSize: 12, color: "#9b9590", marginBottom: 14 }}>{p.category}</div>
+// // //                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f9f7f4", borderRadius: 10, padding: "10px 14px", marginBottom: 14 }}>
+// // //                         <div>
+// // //                           <div style={{ fontSize: 10, fontWeight: 700, color: "#a09a90", textTransform: "uppercase", letterSpacing: ".06em" }}>Price</div>
+// // //                           <div style={{ fontSize: 17, fontWeight: 800, color: "#1a3a2a" }}>Rs.{p.price.toLocaleString()}<span style={{ fontSize: 11, fontWeight: 500, color: "#9b9590" }}>/{p.unit || "kg"}</span></div>
+// // //                         </div>
+// // //                         <div style={{ textAlign: "right" }}>
+// // //                           <div style={{ fontSize: 10, fontWeight: 700, color: "#a09a90", textTransform: "uppercase", letterSpacing: ".06em" }}>Stock</div>
+// // //                           <div style={{ fontSize: 17, fontWeight: 800, color: p.stock === 0 ? "#ef4444" : "#1a3a2a" }}>{p.stock}<span style={{ fontSize: 11, fontWeight: 500, color: "#9b9590" }}>{p.unit || "kg"}</span></div>
+// // //                         </div>
+// // //                       </div>
+// // //                       {p.createdAt && <div style={{ fontSize: 11, color: "#b0ada8", marginBottom: 14, display: "flex", alignItems: "center", gap: 5 }}>
+// // //                         <Icon d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" size={12} />
+// // //                         {new Date(p.createdAt).toLocaleDateString()}
+// // //                       </div>}
+// // //                       <div style={{ display: "flex", gap: 8 }}>
+// // //                         <button onClick={() => { setShowEdit(p); setShowAdd(true); setForm({ cropName: p.cropName, category: p.category, price: String(p.price), stock: String(p.stock), description: p.description || "", unit: p.unit || "kg", imageUrl: p.imageUrl || "" }); }} className="action-btn"
+// // //                           style={{ flex: 1, padding: "8px", background: "#f4f0e8", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#1a3a2a", cursor: "pointer" }}>
+// // //                           Edit
+// // //                         </button>
+// // //                         <button onClick={() => handleDelete(p._id)} disabled={deleting === p._id} className="action-btn"
+// // //                           style={{ flex: 1, padding: "8px", background: "#fff0f0", border: "1px solid #fcd0d0", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#c0392b", cursor: "pointer" }}>
+// // //                           {deleting === p._id ? "…" : "Delete"}
+// // //                         </button>
+// // //                       </div>
+// // //                     </div>
+// // //                   </div>
+// // //                 ))}
+// // //               </div>
+// // //             )}
+// // //           </div>
+// // //         </main>
+// // //       </div>
+
+// // //       {/* ══ ADD / EDIT MODAL ══ */}
+// // //       {showAdd && (
+// // //         <div onClick={e => { if (e.target === e.currentTarget) { setShowAdd(false); setShowEdit(null); } }}
+// // //           style={{ position: "fixed", inset: 0, background: "rgba(10,20,14,.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+// // //           <div className="slide-in" style={{ background: "#fff", borderRadius: 24, padding: "36px", width: "100%", maxWidth: 520, boxShadow: "0 32px 80px rgba(0,0,0,.25)", maxHeight: "90vh", overflowY: "auto" }}>
+// // //             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+// // //               <div>
+// // //                 <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1a3a2a", fontFamily: "'Playfair Display',serif" }}>{showEdit ? "Edit Product" : "Add New Product"}</h2>
+// // //                 <p style={{ fontSize: 13, color: "#9b9590", marginTop: 4 }}>{showEdit ? "Update your listing details" : "List a new crop for sale"}</p>
+// // //               </div>
+// // //               <button onClick={() => { setShowAdd(false); setShowEdit(null); }}
+// // //                 style={{ background: "#f4f0e8", border: "none", width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#6b8070" }}>
+// // //                 <Icon d="M6 18L18 6M6 6l12 12" size={16} />
+// // //               </button>
+// // //             </div>
+// // //             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+// // //               {[
+// // //                 { label: "Crop Name *", key: "cropName", placeholder: "e.g. Tomato, Carrot…", type: "text" },
+// // //                 { label: "Price (Rs.) *", key: "price", placeholder: "e.g. 450", type: "number" },
+// // //                 { label: "Stock *", key: "stock", placeholder: "e.g. 100", type: "number" },
+// // //                 { label: "Description", key: "description", placeholder: "Describe your crop…", type: "textarea" },
+// // //               ].map(f => (
+// // //                 <div key={f.key}>
+// // //                   <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>{f.label}</label>
+// // //                   {f.type === "textarea" ? (
+// // //                     <textarea value={(form as any)[f.key]} onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))} placeholder={f.placeholder} rows={3}
+// // //                       style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4", resize: "vertical" }} />
+// // //                   ) : (
+// // //                     <input type={f.type} value={(form as any)[f.key]} onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))} placeholder={f.placeholder}
+// // //                       style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4" }} />
+// // //                   )}
+// // //                 </div>
+// // //               ))}
+// // //               {/* Category + Unit row */}
+// // //               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+// // //                 <div>
+// // //                   <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>Category</label>
+// // //                   <select value={form.category} onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))}
+// // //                     style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4" }}>
+// // //                     {["Vegetables","Fruits","Grains","Herbs","Other"].map(c => <option key={c}>{c}</option>)}
+// // //                   </select>
+// // //                 </div>
+// // //                 <div>
+// // //                   <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>Unit</label>
+// // //                   <select value={form.unit} onChange={e => setForm(prev => ({ ...prev, unit: e.target.value }))}
+// // //                     style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4" }}>
+// // //                     {["kg","g","litre","bunch","piece"].map(u => <option key={u}>{u}</option>)}
+// // //                   </select>
+// // //                 </div>
+// // //               </div>
+// // //               <button onClick={handleSave} disabled={saving || !form.cropName || !form.price || !form.stock} className="action-btn"
+// // //                 style={{ padding: "13px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", color: "#fff", border: "none", borderRadius: 11, fontSize: 15, fontWeight: 700, cursor: "pointer", opacity: saving ? 0.7 : 1, marginTop: 4 }}>
+// // //                 {saving ? "Saving…" : showEdit ? "Update Product" : "Add Product"}
+// // //               </button>
+// // //             </div>
+// // //           </div>
+// // //         </div>
 // // //       )}
-// // //     </div>
+
+// // //       {/* Toast */}
+// // //       {toast && (
+// // //         <div className="toast" style={{ position: "fixed", bottom: 28, right: 28, background: "#1a3a2a", color: "#fff", padding: "13px 22px", borderRadius: 12, fontSize: 14, fontWeight: 600, boxShadow: "0 8px 24px rgba(0,0,0,.2)", zIndex: 300 }}>
+// // //           {toast}
+// // //         </div>
+// // //       )}
+// // //     </>
 // // //   );
 // // // }
 
@@ -960,1769 +464,1666 @@
 
 // // import { useState, useEffect, useRef } from "react";
 // // import { useRouter } from "next/navigation";
-// // import { usePathname } from "next/navigation";
-// // import api, { productAPI } from "@/lib/axios-proxy";
+// // import { productAPI, profileAPI } from "@/lib/axios-proxy";
+// // import api from "@/lib/axios-proxy";
 
-// // // ── Types ──────────────────────────────────────────────────
+// // interface User    { _id: string; name: string; email: string; role: string; }
+// // interface Profile { farmName: string; district: string; }
 // // interface Product {
-// //   _id: string;
-// //   cropName: string;
-// //   category: string;
-// //   type: string;
-// //   price: number;
-// //   stock: number;
-// //   harvestDate?: string;
-// //   organicTreatmentHistory?: string;
-// //   trustScore: number;
-// //   status: "Active" | "Out of Stock" | "Inactive";
-// //   imageUrl?: string;
+// //   _id: string; cropName: string; category: string; price: number;
+// //   stock: number; status: string; imageUrl?: string; createdAt?: string;
+// //   description?: string; unit?: string;
 // // }
 
-// // const CATEGORIES = ["Leafy Green", "Root", "Fruit", "Grain", "Herb", "Other"];
-// // const TYPES      = ["Organic", "Conventional"];
 // // const NAV = [
-// //   { icon: "🏠", label: "Overview",    href: "/dashboard/farmer" },
-// //   { icon: "🔬", label: "Crop Doctor", href: "/dashboard/farmer/crop-doctor" },
-// //   { icon: "🌾", label: "My Products", href: "/dashboard/farmer/products" },
-// //   { icon: "📦", label: "Orders",      href: "/dashboard/farmer/orders" },
-// //   { icon: "⛈️", label: "Weather",     href: "/dashboard/farmer/weather" },
+// //   { label: "Overview",    href: "/dashboard/farmer",             icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
+// //   { label: "Crop Doctor", href: "/dashboard/farmer/crop-doctor", icon: "M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" },
+// //   { label: "My Products", href: "/dashboard/farmer/products",    icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
+// //   { label: "Orders",      href: "/dashboard/farmer/orders",      icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
+// //   { label: "Weather",     href: "/dashboard/farmer/weather",     icon: "M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" },
+// //   { label: "Earnings",    href: "/dashboard/farmer/earnings",    icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
 // // ];
-// // const CROP_ICONS: Record<string, string> = {
-// //   "Leafy Green": "🥬", Root: "🥕", Fruit: "🍅",
-// //   Grain: "🌾", Herb: "🌿", Other: "🌱",
-// // };
-// // const labelStyle: React.CSSProperties = {
-// //   fontSize: "11px", fontWeight: 700, color: "#6b8070",
-// //   textTransform: "uppercase", letterSpacing: "0.06em",
-// //   display: "block", marginBottom: "6px",
-// // };
-// // const inputStyle: React.CSSProperties = {
-// //   width: "100%", padding: "10px 14px",
-// //   border: "1.5px solid #e0ddd6", borderRadius: "10px",
-// //   fontFamily: "'DM Sans',sans-serif", fontSize: "14px",
-// //   color: "#1a3a2a", background: "white", outline: "none",
-// //   boxSizing: "border-box",
-// // };
 
-// // // ── Save product with multipart/form-data ──────────────────
-// // async function saveProduct(
-// //   data: {
-// //     cropName: string; category: string; type: string;
-// //     price: string; stock: string; harvestDate: string;
-// //     organicTreatmentHistory: string; imageFile: File | null;
-// //   },
-// //   productId?: string
-// // ) {
-// //   const form = new FormData();
-// //   form.append("cropName", data.cropName);
-// //   form.append("category", data.category);
-// //   form.append("type",     data.type);
-// //   form.append("price",    data.price);
-// //   form.append("stock",    data.stock);
-// //   if (data.harvestDate)             form.append("harvestDate",             data.harvestDate);
-// //   if (data.organicTreatmentHistory) form.append("organicTreatmentHistory", data.organicTreatmentHistory);
-// //   if (data.imageFile)               form.append("image", data.imageFile);
+// // const CATEGORIES = ["All", "Vegetables", "Fruits", "Grains", "Herbs", "Other"];
+// // const FILTERS    = ["All", "Active", "Out of Stock", "Inactive"];
 
-// //   const config = { headers: { "Content-Type": "multipart/form-data" } };
-// //   return productId
-// //     ? api.put(`/products/${productId}`, form, config)
-// //     : api.post("/products", form, config);
-// // }
+// // const Icon = ({ d, size = 18, style }: { d: string; size?: number; style?: React.CSSProperties }) => (
+// //   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+// //     strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" style={style}>
+// //     <path d={d} />
+// //   </svg>
+// // );
 
-// // // ── Add / Edit Modal ───────────────────────────────────────
-// // function ProductModal({
-// //   product, onClose, onSaved,
-// // }: {
-// //   product: Product | null;
-// //   onClose: () => void;
-// //   onSaved: () => void;
-// // }) {
-// //   const isEdit       = !!product;
-// //   const fileInputRef = useRef<HTMLInputElement>(null);   // ✅ declared here
-
-// //   const [form, setForm] = useState({
-// //     cropName:                product?.cropName                  || "",
-// //     category:                product?.category                  || "",
-// //     type:                    product?.type                      || "",
-// //     price:                   product?.price?.toString()         || "",
-// //     stock:                   product?.stock?.toString()         || "",
-// //     harvestDate:             product?.harvestDate?.slice(0, 10) || "",
-// //     organicTreatmentHistory: product?.organicTreatmentHistory   || "",
-// //   });
-
-// //   // ✅ imageFile and imagePreview declared here inside the modal
-// //   const [imageFile,    setImageFile]    = useState<File | null>(null);
-// //   const [imagePreview, setImagePreview] = useState<string>(
-// //     product?.imageUrl ? `http://localhost:5000${product.imageUrl}` : ""
-// //   );
-// //   const [loading, setLoading] = useState(false);
-// //   const [error,   setError]   = useState("");
-
-// //   const set = (key: string, value: string) =>
-// //     setForm(prev => ({ ...prev, [key]: value }));
-
-// //   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-// //     const file = e.target.files?.[0];
-// //     if (!file) return;
-// //     setImageFile(file);
-// //     setImagePreview(URL.createObjectURL(file));
+// // const StatusBadge = ({ s }: { s: string }) => {
+// //   const map: Record<string, [string, string]> = {
+// //     Active:   ["#dcfce7","#16a34a"], active: ["#dcfce7","#16a34a"],
+// //     approved: ["#dcfce7","#16a34a"], Inactive: ["#fee2e2","#dc2626"],
+// //     "Out of Stock": ["#fef9c3","#a16207"],
 // //   };
-
-// //   const handleSave = async () => {
-// //     if (!form.cropName || !form.category || !form.type || !form.price || !form.stock) {
-// //       setError("Please fill all required fields."); return;
-// //     }
-// //     setLoading(true); setError("");
-// //     try {
-// //       await saveProduct({ ...form, imageFile }, isEdit ? product!._id : undefined);
-// //       onSaved();
-// //       onClose();
-// //     } catch (err: any) {
-// //       setError(err.response?.data?.message || "Failed to save product.");
-// //     } finally {
-// //       setLoading(false);
-// //     }
-// //   };
-
+// //   const [bg, col] = map[s] ?? ["#f3f4f6","#6b7280"];
 // //   return (
-// //     <div
-// //       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", zIndex: 200,
-// //         display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
-// //       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-// //     >
-// //       <div style={{ background: "#f9f7f3", borderRadius: "18px", padding: "32px",
-// //         width: "100%", maxWidth: "580px", maxHeight: "90vh", overflowY: "auto" }}>
-
-// //         {/* Header */}
-// //         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-// //           <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#1a3a2a", margin: 0 }}>
-// //             {isEdit ? "Edit Product" : "Add New Product"}
-// //           </h2>
-// //           <button onClick={onClose}
-// //             style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: "#6b8070" }}>
-// //             ✕
-// //           </button>
-// //         </div>
-
-// //         {error && (
-// //           <div style={{ background: "#fff1f1", border: "1px solid #fcd0d0", borderRadius: "10px",
-// //             padding: "10px 14px", color: "#c0392b", fontSize: "13px", marginBottom: "16px" }}>
-// //             ⚠️ {error}
-// //           </div>
-// //         )}
-
-// //         {/* Image Upload */}
-// //         <div style={{ marginBottom: "20px" }}>
-// //           <label style={labelStyle}>Product Image (optional)</label>
-// //           <div
-// //             onClick={() => fileInputRef.current?.click()}
-// //             style={{
-// //               border: "2px dashed #c8e6c9", borderRadius: "12px", padding: "16px",
-// //               cursor: "pointer", textAlign: "center",
-// //               background: imagePreview ? "#f0fdf4" : "#fff",
-// //               minHeight: imagePreview ? "160px" : "100px",
-// //               display: "flex", alignItems: "center", justifyContent: "center",
-// //               position: "relative", overflow: "hidden",
-// //             }}
-// //           >
-// //             {imagePreview ? (
-// //               <div style={{ position: "relative", width: "100%" }}>
-// //                 <img src={imagePreview} alt="preview"
-// //                   style={{ maxHeight: "140px", maxWidth: "100%", objectFit: "contain", borderRadius: "8px" }} />
-// //                 <div style={{ position: "absolute", top: 4, right: 4, background: "#1a3a2a",
-// //                   color: "#fff", borderRadius: "6px", padding: "3px 8px", fontSize: "11px", fontWeight: 700 }}>
-// //                   Click to change
-// //                 </div>
-// //               </div>
-// //             ) : (
-// //               <div>
-// //                 <div style={{ fontSize: "32px", marginBottom: "6px" }}>📷</div>
-// //                 <div style={{ fontSize: "13px", color: "#6b8070", fontWeight: 600 }}>Click to upload image</div>
-// //                 <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "4px" }}>JPG, PNG or WebP · Max 5MB</div>
-// //               </div>
-// //             )}
-// //           </div>
-// //           <input
-// //             ref={fileInputRef}
-// //             type="file"
-// //             accept="image/jpeg,image/png,image/webp"
-// //             onChange={handleImageChange}
-// //             style={{ display: "none" }}
-// //           />
-// //           {imageFile && (
-// //             <div style={{ fontSize: "11px", color: "#6b8070", marginTop: "4px" }}>
-// //               📎 {imageFile.name} ({(imageFile.size / 1024).toFixed(0)} KB)
-// //               <button
-// //                 onClick={() => {
-// //                   setImageFile(null);
-// //                   setImagePreview(product?.imageUrl ? `http://localhost:5000${product.imageUrl}` : "");
-// //                 }}
-// //                 style={{ marginLeft: "8px", background: "none", border: "none",
-// //                   color: "#ef4444", cursor: "pointer", fontSize: "11px" }}>
-// //                 Remove
-// //               </button>
-// //             </div>
-// //           )}
-// //         </div>
-
-// //         {/* Form grid */}
-// //         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
-// //           <div>
-// //             <label style={labelStyle}>Crop Name *</label>
-// //             <input type="text" placeholder="e.g. Organic Spinach"
-// //               value={form.cropName} onChange={e => set("cropName", e.target.value)} style={inputStyle} />
-// //           </div>
-// //           <div>
-// //             <label style={labelStyle}>Category *</label>
-// //             <select value={form.category} onChange={e => set("category", e.target.value)} style={inputStyle}>
-// //               <option value="">Select</option>
-// //               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-// //             </select>
-// //           </div>
-// //           <div>
-// //             <label style={labelStyle}>Price (Rs/kg) *</label>
-// //             <input type="number" placeholder="150" min="1"
-// //               value={form.price} onChange={e => set("price", e.target.value)} style={inputStyle} />
-// //           </div>
-// //           <div>
-// //             <label style={labelStyle}>Stock (kg) *</label>
-// //             <input type="number" placeholder="25" min="0"
-// //               value={form.stock} onChange={e => set("stock", e.target.value)} style={inputStyle} />
-// //           </div>
-// //           <div>
-// //             <label style={labelStyle}>Harvest Date</label>
-// //             <input type="date"
-// //               value={form.harvestDate} onChange={e => set("harvestDate", e.target.value)} style={inputStyle} />
-// //           </div>
-// //           <div>
-// //             <label style={labelStyle}>Type *</label>
-// //             <select value={form.type} onChange={e => set("type", e.target.value)} style={inputStyle}>
-// //               <option value="">Select</option>
-// //               {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-// //             </select>
-// //           </div>
-// //         </div>
-
-// //         <div style={{ marginBottom: "24px" }}>
-// //           <label style={labelStyle}>Organic Treatment History (optional)</label>
-// //           <textarea placeholder="Describe treatments used..."
-// //             value={form.organicTreatmentHistory}
-// //             onChange={e => set("organicTreatmentHistory", e.target.value)}
-// //             rows={3}
-// //             style={{ ...inputStyle, resize: "vertical", height: "auto" }}
-// //           />
-// //         </div>
-
-// //         <button onClick={handleSave} disabled={loading} style={{
-// //           width: "100%", padding: "13px",
-// //           background: loading ? "#a8d5b5" : "linear-gradient(135deg,#1a3a2a,#2d5a3d)",
-// //           color: "white", border: "none", borderRadius: "10px",
-// //           fontFamily: "'DM Sans',sans-serif", fontSize: "15px", fontWeight: 700,
-// //           cursor: loading ? "not-allowed" : "pointer",
-// //         }}>
-// //           {loading ? "Saving…" : isEdit ? "Save Changes" : "List Product"}
-// //         </button>
-// //       </div>
-// //     </div>
+// //     <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 99, background: bg, color: col }}>
+// //       {s === "approved" ? "Active" : s}
+// //     </span>
 // //   );
-// // }
+// // };
 
-// // // ── Main Page ──────────────────────────────────────────────
-// // export default function MyProductsPage() {
-// //   const router   = useRouter();
-// //   const pathname = usePathname();
-// //   const [user,     setUser]     = useState<{ name: string } | null>(null);
-// //   const [products, setProducts] = useState<Product[]>([]);
-// //   const [loading,  setLoading]  = useState(true);
-// //   const [search,   setSearch]   = useState("");
-// //   const [modal,    setModal]    = useState<"add" | "edit" | null>(null);
-// //   const [selected, setSelected] = useState<Product | null>(null);
-// //   const [deleting, setDeleting] = useState<string | null>(null);
-// //   const [error,    setError]    = useState("");
+// // export default function ProductsPage() {
+// //   const router = useRouter();
+
+// //   const [user,          setUser]          = useState<User | null>(null);
+// //   const [profile,       setProfile]       = useState<Profile | null>(null);
+// //   const [sub,           setSub]           = useState<any>(null);
+// //   const [products,      setProducts]      = useState<Product[]>([]);
+// //   const [loading,       setLoading]       = useState(true);
+// //   const [sideCollapsed, setSideCollapsed] = useState(false);
+// //   const [search,        setSearch]        = useState("");
+// //   const [filter,        setFilter]        = useState("All");
+// //   const [catFilter,     setCatFilter]     = useState("All");
+// //   const [showAdd,       setShowAdd]       = useState(false);
+// //   const [showEdit,      setShowEdit]      = useState<Product | null>(null);
+// //   const [saving,        setSaving]        = useState(false);
+// //   const [deleting,      setDeleting]      = useState<string | null>(null);
+// //   const [toast,         setToast]         = useState("");
+
+// //   const blankForm = { cropName: "", category: "Vegetables", price: "", stock: "", description: "", unit: "kg", imageUrl: "" };
+// //   const [form, setForm] = useState(blankForm);
+// //   const fileRef = useRef<HTMLInputElement>(null);
+
+// //   const SBW = sideCollapsed ? 68 : 220;
+
+// //   const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; };
+// //   const getInitial = () => (user?.name || "F")[0].toUpperCase();
 
 // //   useEffect(() => {
 // //     const stored = localStorage.getItem("agriai_user");
 // //     const token  = localStorage.getItem("agriai_token");
 // //     if (!stored || !token) { router.push("/"); return; }
 // //     const u = JSON.parse(stored);
-// //     if (u.role !== "farmer" && u.role !== "admin") { router.push("/"); return; }
 // //     setUser(u);
-// //     fetchProducts();
+// //     loadData(u);
 // //   }, []);
 
-// //   const fetchProducts = async () => {
-// //     setLoading(true); setError("");
+// //   const loadData = async (u: User) => {
 // //     try {
-// //       const { data } = await productAPI.getMyProducts();
-// //       setProducts(Array.isArray(data) ? data : data.products || []);
-// //     } catch (err: any) {
-// //       setError(err.response?.data?.message || "Failed to load products.");
-// //     } finally {
-// //       setLoading(false);
-// //     }
+// //       const [profR, prodR, subR] = await Promise.allSettled([
+// //         profileAPI.getMe(),
+// //         productAPI.getMyProducts(),
+// //         api.get("/subscriptions/my"),
+// //       ]);
+// //       if (profR.status === "fulfilled") setProfile({ farmName: profR.value.data.farmName || "", district: profR.value.data.district || "" });
+// //       if (prodR.status === "fulfilled") {
+// //         const raw = prodR.value.data?.products || prodR.value.data || [];
+// //         setProducts(Array.isArray(raw) ? raw : []);
+// //       }
+// //       if (subR.status === "fulfilled") setSub(subR.value.data);
+// //     } catch { }
+// //     setLoading(false);
+// //   };
+
+// //   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 3000); };
+
+// //   const handleSave = async () => {
+// //     if (!form.cropName || !form.price || !form.stock) return;
+// //     setSaving(true);
+// //     try {
+// //       const payload = {
+// //         cropName: form.cropName, category: form.category,
+// //         price: Number(form.price), stock: Number(form.stock),
+// //         description: form.description, unit: form.unit,
+// //         ...(form.imageUrl ? { imageUrl: form.imageUrl } : {}),
+// //       };
+// //       if (showEdit) {
+// //         await productAPI.update(showEdit._id, payload);
+// //         setProducts(prev => prev.map(p => p._id === showEdit._id ? { ...p, ...payload } : p));
+// //         showToast("Product updated!");
+// //       } else {
+// //         const { data } = await productAPI.create(payload);
+// //         setProducts(prev => [...prev, data.product || data]);
+// //         showToast("Product added!");
+// //       }
+// //       setShowAdd(false); setShowEdit(null); setForm(blankForm);
+// //     } catch (e: any) { showToast(e.response?.data?.message || "Error saving product"); }
+// //     setSaving(false);
 // //   };
 
 // //   const handleDelete = async (id: string) => {
-// //     if (!confirm("Delete this product? This cannot be undone.")) return;
 // //     setDeleting(id);
 // //     try {
-// //       await productAPI.remove(id);
+// //       await productAPI.delete(id);
 // //       setProducts(prev => prev.filter(p => p._id !== id));
-// //     } catch (err: any) {
-// //       alert(err.response?.data?.message || "Delete failed.");
-// //     } finally {
-// //       setDeleting(null);
-// //     }
+// //       showToast("Product deleted.");
+// //     } catch { showToast("Failed to delete."); }
+// //     setDeleting(null);
 // //   };
 
-// //   const handleLogout = () => {
-// //     localStorage.removeItem("agriai_token");
-// //     localStorage.removeItem("agriai_user");
-// //     router.push("/");
-// //   };
+// //   const handleLogout = () => { localStorage.removeItem("agriai_token"); localStorage.removeItem("agriai_user"); router.push("/"); };
 
-// //   const filtered = products.filter(p =>
-// //     p.cropName.toLowerCase().includes(search.toLowerCase())
+// //   const filtered = products.filter(p => {
+// //     const matchSearch = p.cropName.toLowerCase().includes(search.toLowerCase());
+// //     const matchFilter = filter === "All" || (filter === "Active" && (p.status === "Active" || p.status === "approved")) || (filter === "Out of Stock" && p.stock === 0) || p.status === filter;
+// //     const matchCat    = catFilter === "All" || p.category === catFilter;
+// //     return matchSearch && matchFilter && matchCat;
+// //   });
+
+// //   const totalProducts   = products.length;
+// //   const activeListings  = products.filter(p => p.status === "Active" || p.status === "approved").length;
+// //   const outOfStock      = products.filter(p => p.stock === 0).length;
+// //   const inventoryValue  = products.reduce((a, p) => a + p.price * p.stock, 0);
+
+// //   if (loading) return (
+// //     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f4f0e8", fontFamily: "'DM Sans',sans-serif" }}>
+// //       <div style={{ textAlign: "center" }}>
+// //         <div style={{ width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#1a3a2a,#6aaa78)", margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+// //           <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={22} style={{ color: "#fff" }} />
+// //         </div>
+// //         <div style={{ color: "#2d5a3d", fontWeight: 700, fontSize: 15 }}>Loading products…</div>
+// //       </div>
+// //     </div>
 // //   );
 
-// //   const getInitial = () => (user?.name || "F")[0].toUpperCase();
-
 // //   return (
-// //     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'DM Sans',sans-serif", background: "#f4f0e8" }}>
+// //     <>
+// //       <style>{`
+// //         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+// //         *{box-sizing:border-box;margin:0;padding:0;}
+// //         body{font-family:'DM Sans',sans-serif;background:#f2efe8;}
+// //         ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:#d0cdc6;border-radius:10px;}
+// //         .nav-btn:hover{background:rgba(106,170,120,.15)!important;color:#fff!important;}
+// //         .action-btn:hover{opacity:.88;}
+// //         .prod-card:hover{box-shadow:0 12px 36px rgba(26,58,42,.13)!important;transform:translateY(-3px);}
+// //         .filter-chip:hover{background:#e8f5e9!important;color:#1a3a2a!important;}
+// //         input:focus,textarea:focus,select:focus{outline:none;border-color:#6aaa78!important;box-shadow:0 0 0 3px rgba(106,170,120,.15);}
+// //         @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+// //         .fade-up{animation:fadeUp .32s ease both;}
+// //         @keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+// //         .slide-in{animation:slideIn .28s ease both;}
+// //         @keyframes toastIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+// //         .toast{animation:toastIn .25s ease both;}
+// //       `}</style>
 
-// //       {/* ══ SIDEBAR ══ */}
-// //       <aside style={{ width: 190, background: "linear-gradient(180deg,#1a3a2a 0%,#0f2418 100%)",
-// //         display: "flex", flexDirection: "column", position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 50 }}>
+// //       <div style={{ display: "flex", minHeight: "100vh", background: "#f2efe8" }}>
 
-// //         <div style={{ padding: "22px 20px 16px", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
-// //           <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 900, fontSize: 22, color: "#fff" }}>
-// //             Agri<span style={{ color: "#6aaa78" }}>AI</span>
-// //           </div>
-// //         </div>
-
-// //         <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
-// //           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-// //             <div style={{ width: 38, height: 38, borderRadius: "50%", background: "#6aaa78",
-// //               display: "flex", alignItems: "center", justifyContent: "center",
-// //               fontSize: 16, fontWeight: 700, color: "#fff" }}>
-// //               {getInitial()}
-// //             </div>
-// //             <div>
-// //               <div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{user?.name || "Farmer"}</div>
-// //               <div style={{ color: "rgba(255,255,255,.45)", fontSize: 11 }}>My Farm</div>
-// //             </div>
-// //           </div>
-// //         </div>
-
-// //         <nav style={{ flex: 1, padding: "12px 0", overflowY: "auto" }}>
-// //           {NAV.map(item => {
-// //             const isActive = pathname === item.href;
-// //             return (
-// //               <button key={item.href} onClick={() => router.push(item.href)} style={{
-// //                 width: "100%", display: "flex", alignItems: "center", gap: 10,
-// //                 padding: "10px 20px", border: "none",
-// //                 background: isActive ? "rgba(106,170,120,.2)" : "transparent",
-// //                 borderLeft: isActive ? "3px solid #6aaa78" : "3px solid transparent",
-// //                 color: isActive ? "#fff" : "rgba(255,255,255,.55)",
-// //                 fontSize: 13, fontWeight: isActive ? 600 : 400,
-// //                 cursor: "pointer", transition: "all .2s", textAlign: "left",
-// //               }}>
-// //                 <span>{item.icon}</span>{item.label}
-// //               </button>
-// //             );
-// //           })}
-// //         </nav>
-
-// //         <div style={{ padding: "12px 0", borderTop: "1px solid rgba(255,255,255,.08)" }}>
-// //           <button onClick={handleLogout} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10,
-// //             padding: "10px 20px", border: "none", background: "transparent",
-// //             color: "#ef4444", fontSize: 13, cursor: "pointer", fontWeight: 600 }}>
-// //             🚪 Sign Out
-// //           </button>
-// //         </div>
-// //       </aside>
-
-// //       {/* ══ MAIN ══ */}
-// //       <main style={{ marginLeft: 190, flex: 1, padding: "28px 32px" }}>
-
-// //         {/* Header */}
-// //         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
-// //           <div>
-// //             <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#1a3a2a", margin: 0 }}>My Products</h1>
-// //             <p style={{ fontSize: "14px", color: "#6b8070", marginTop: "4px" }}>
-// //               Manage your produce listings · {products.length} product{products.length !== 1 ? "s" : ""}
-// //             </p>
-// //           </div>
-// //           <button onClick={() => { setSelected(null); setModal("add"); }} style={{
-// //             display: "flex", alignItems: "center", gap: "8px", padding: "11px 20px",
-// //             background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", color: "white",
-// //             border: "none", borderRadius: "100px", fontFamily: "'DM Sans',sans-serif",
-// //             fontSize: "14px", fontWeight: 600, cursor: "pointer",
-// //           }}>
-// //             + Add Product
-// //           </button>
-// //         </div>
-
-// //         {/* Search */}
-// //         <div style={{ marginBottom: "24px", position: "relative", maxWidth: "420px" }}>
-// //           <span style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", fontSize: "16px" }}>🔍</span>
-// //           <input type="text" placeholder="Search products…"
-// //             value={search} onChange={e => setSearch(e.target.value)}
-// //             style={{ width: "100%", padding: "11px 14px 11px 42px", border: "1.5px solid #e0ddd6",
-// //               borderRadius: "12px", fontFamily: "'DM Sans',sans-serif", fontSize: "14px",
-// //               background: "white", outline: "none", boxSizing: "border-box" }}
-// //           />
-// //         </div>
-
-// //         {/* Error */}
-// //         {error && (
-// //           <div style={{ background: "#fff1f1", border: "1px solid #fcd0d0", borderRadius: "12px",
-// //             padding: "14px 18px", color: "#c0392b", fontSize: "14px", marginBottom: "20px",
-// //             display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-// //             <span>⚠️ {error}</span>
-// //             <button onClick={fetchProducts} style={{ background: "#1a3a2a", color: "#fff",
-// //               border: "none", borderRadius: "8px", padding: "6px 14px",
-// //               fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
-// //               Retry
+// //         {/* ══ SIDEBAR ══ */}
+// //         <aside style={{
+// //           width: SBW, background: "linear-gradient(185deg,#1a3a2a 0%,#122a1c 60%,#0a1e11 100%)",
+// //           display: "flex", flexDirection: "column", position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 60,
+// //           transition: "width .28s cubic-bezier(.4,0,.2,1)", overflow: "hidden",
+// //           boxShadow: "4px 0 24px rgba(0,0,0,.18)",
+// //         }}>
+// //           {/* Logo */}
+// //           <div style={{ padding: sideCollapsed ? "18px 0" : "20px 20px 16px", borderBottom: "1px solid rgba(255,255,255,.07)", display: "flex", alignItems: "center", justifyContent: sideCollapsed ? "center" : "space-between" }}>
+// //             {!sideCollapsed && (
+// //               <div onClick={() => router.push("/")} style={{ fontFamily: "'Playfair Display',serif", fontWeight: 900, fontSize: 22, color: "#fff", cursor: "pointer", letterSpacing: "-0.5px" }}
+// //                 onMouseEnter={e => (e.currentTarget.style.opacity = "0.75")} onMouseLeave={e => (e.currentTarget.style.opacity = "1")}>
+// //                 Ag<span style={{ color: "#6aaa78" }}>real</span>
+// //               </div>
+// //             )}
+// //             <button onClick={() => setSideCollapsed(p => !p)} className="action-btn"
+// //               style={{ background: "rgba(255,255,255,.07)", border: "none", borderRadius: 8, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,.5)", flexShrink: 0 }}>
+// //               <Icon d={sideCollapsed ? "M13 5l7 7-7 7M5 5l7 7-7 7" : "M11 19l-7-7 7-7m8 14l-7-7 7-7"} size={14} />
 // //             </button>
 // //           </div>
-// //         )}
-
-// //         {/* Grid */}
-// //         {loading ? (
-// //           <div style={{ textAlign: "center", padding: "80px", color: "#6b8070" }}>
-// //             <div style={{ fontSize: 36, marginBottom: 12 }}>🌾</div>
-// //             <div style={{ fontWeight: 600 }}>Loading products…</div>
-// //           </div>
-// //         ) : filtered.length === 0 ? (
-// //           <div style={{ textAlign: "center", padding: "80px", color: "#c0bdb5" }}>
-// //             <div style={{ fontSize: "52px", marginBottom: "14px" }}>🌱</div>
-// //             <div style={{ fontSize: "16px", color: "#6b8070", fontWeight: 500 }}>
-// //               {search ? `No products match "${search}"` : "No products yet. Click + Add Product to start selling."}
-// //             </div>
-// //           </div>
-// //         ) : (
-// //           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "18px" }}>
-// //             {filtered.map(p => (
-// //               <div key={p._id} style={{
-// //                 background: "white", borderRadius: "16px",
-// //                 border: "1px solid #e8e4dc", overflow: "hidden",
-// //                 boxShadow: "0 2px 10px rgba(0,0,0,.05)", position: "relative",
-// //               }}>
-
-// //                 {/* ── Image area ── */}
-// //                 <div style={{ height: "140px", background: "#f0fdf4", position: "relative",
-// //                   display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-// //                   {p.imageUrl ? (
-// //                     <img
-// //                       src={`http://localhost:5000${p.imageUrl}`}
-// //                       alt={p.cropName}
-// //                       style={{ width: "100%", height: "100%", objectFit: "cover" }}
-// //                       onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-// //                     />
-// //                   ) : (
-// //                     <span style={{ fontSize: "52px" }}>{CROP_ICONS[p.category] || "🌱"}</span>
-// //                   )}
-
-// //                   {/* Organic badge on image */}
-// //                   {p.type === "Organic" && (
-// //                     <div style={{ position: "absolute", top: "10px", right: "10px",
-// //                       background: "#e8f5e9", color: "#2d6a35", fontSize: "11px",
-// //                       fontWeight: 700, padding: "3px 10px", borderRadius: "100px" }}>
-// //                       🌿 Organic
+// //           {/* User card */}
+// //           <div style={{ padding: sideCollapsed ? "14px 0" : "14px 16px", borderBottom: "1px solid rgba(255,255,255,.07)", display: sideCollapsed ? "flex" : "block", justifyContent: "center" }}>
+// //             <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: sideCollapsed ? "center" : "flex-start" }}>
+// //               <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6aaa78,#2d5a3d)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#fff", border: "2px solid rgba(255,255,255,.15)", flexShrink: 0 }}>
+// //                 {getInitial()}
+// //               </div>
+// //               {!sideCollapsed && (
+// //                 <div>
+// //                   <div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{user?.name || "Farmer"}</div>
+// //                   <div style={{ color: "rgba(255,255,255,.4)", fontSize: 10 }}>{profile?.farmName || "My Farm"}</div>
+// //                   {sub?.isActive && (
+// //                     <div style={{ marginTop: 4, display: "inline-flex", alignItems: "center", gap: 3, background: "rgba(106,170,120,.25)", borderRadius: 99, padding: "1px 8px", fontSize: 9, color: "#6aaa78", fontWeight: 700 }}>
+// //                       <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#6aaa78", display: "inline-block" }} />
+// //                       {sub.status === "trialing" ? "Free Trial" : "Active"}
 // //                     </div>
 // //                   )}
 // //                 </div>
+// //               )}
+// //             </div>
+// //           </div>
+// //           {/* Nav */}
+// //           <nav style={{ flex: 1, padding: "10px 0", overflowY: "auto" }}>
+// //             {!sideCollapsed && <div style={{ padding: "10px 16px 4px", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.25)", textTransform: "uppercase", letterSpacing: ".1em" }}>Navigation</div>}
+// //             {NAV.map(item => {
+// //               const active = item.href === "/dashboard/farmer/products";
+// //               return (
+// //                 <button key={item.href} onClick={() => router.push(item.href)} className="nav-btn"
+// //                   title={sideCollapsed ? item.label : undefined}
+// //                   style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: sideCollapsed ? "12px 0" : "9px 16px", justifyContent: sideCollapsed ? "center" : "flex-start", border: "none", background: active ? "rgba(106,170,120,.18)" : "transparent", borderLeft: active ? "3px solid #6aaa78" : "3px solid transparent", color: active ? "#fff" : "rgba(255,255,255,.5)", fontSize: 13, fontWeight: active ? 600 : 400, cursor: "pointer", transition: "all .18s", textAlign: "left" }}>
+// //                   <Icon d={item.icon} size={17} style={{ flexShrink: 0 }} />
+// //                   {!sideCollapsed && <span>{item.label}</span>}
+// //                   {!sideCollapsed && active && <div style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: "#6aaa78" }} />}
+// //                 </button>
+// //               );
+// //             })}
+// //           </nav>
+// //           {/* Bottom */}
+// //           <div style={{ padding: "10px 0", borderTop: "1px solid rgba(255,255,255,.07)" }}>
+// //             <button onClick={() => router.push("/dashboard/farmer/settings")} className="nav-btn" title={sideCollapsed ? "Settings" : undefined}
+// //               style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, justifyContent: sideCollapsed ? "center" : "flex-start", padding: sideCollapsed ? "11px 0" : "9px 16px", border: "none", background: "transparent", color: "rgba(255,255,255,.4)", fontSize: 13, cursor: "pointer", transition: "all .18s" }}>
+// //               <Icon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" size={16} style={{ flexShrink: 0 }} />
+// //               {!sideCollapsed && <span>Settings</span>}
+// //             </button>
+// //             <button onClick={handleLogout} className="nav-btn" title={sideCollapsed ? "Sign Out" : undefined}
+// //               style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, justifyContent: sideCollapsed ? "center" : "flex-start", padding: sideCollapsed ? "11px 0" : "9px 16px", border: "none", background: "transparent", color: "#f87171", fontSize: 13, cursor: "pointer", fontWeight: 600, transition: "all .18s" }}>
+// //               <Icon d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" size={16} style={{ flexShrink: 0 }} />
+// //               {!sideCollapsed && <span>Sign Out</span>}
+// //             </button>
+// //           </div>
+// //         </aside>
 
-// //                 {/* ── Card body ── */}
-// //                 <div style={{ padding: "16px" }}>
-// //                   <div style={{ marginBottom: "12px" }}>
-// //                     <div style={{ fontSize: "16px", fontWeight: 700, color: "#1a3a2a" }}>{p.cropName}</div>
-// //                     <div style={{ fontSize: "13px", color: "#6b8070" }}>{p.category}</div>
+// //         {/* ══ MAIN ══ */}
+// //         <main style={{ marginLeft: SBW, flex: 1, display: "flex", flexDirection: "column", transition: "margin-left .28s cubic-bezier(.4,0,.2,1)", minHeight: "100vh" }}>
+
+// //           {/* Topbar */}
+// //           <header style={{ background: "rgba(255,255,255,.92)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(0,0,0,.07)", padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 40 }}>
+// //             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+// //               <button onClick={() => router.back()} className="action-btn"
+// //                 style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, background: "#f4f0e8", border: "1px solid #e0ddd6", cursor: "pointer", flexShrink: 0 }}>
+// //                 <Icon d="M15 19l-7-7 7-7" size={16} style={{ color: "#1a3a2a" }} />
+// //               </button>
+// //               <div>
+// //                 <div style={{ fontSize: 19, fontWeight: 700, color: "#1c2b22", letterSpacing: "-.3px" }}>
+// //                   {greeting()}, <span style={{ color: "#2d5a3d" }}>{user?.name?.split(" ")[0]}</span>
+// //                 </div>
+// //                 <div style={{ fontSize: 12, color: "#9b9590", marginTop: 2 }}>
+// //                   {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+// //                   {profile?.district ? ` · ${profile.district}` : ""}
+// //                 </div>
+// //               </div>
+// //             </div>
+// //             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+// //               {/* Search */}
+// //               <div style={{ position: "relative" }}>
+// //                 <Icon d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" size={15} style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "#9b9590" }} />
+// //                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search crops…"
+// //                   style={{ paddingLeft: 34, paddingRight: 14, height: 36, border: "1px solid #e0ddd6", borderRadius: 9, background: "#f9f7f4", fontSize: 13, color: "#1a3a2a", width: 200, fontFamily: "'DM Sans',sans-serif" }} />
+// //               </div>
+// //               {/* Add Product */}
+// //               <button onClick={() => { setShowAdd(true); setShowEdit(null); setForm(blankForm); }} className="action-btn"
+// //                 style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 4px 14px rgba(26,58,42,.25)" }}>
+// //                 <Icon d="M12 4v16m8-8H4" size={15} />
+// //                 Add Product
+// //               </button>
+// //               {/* Avatar */}
+// //               <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6aaa78,#2d5a3d)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 15, border: "2px solid rgba(255,255,255,.8)", boxShadow: "0 2px 8px rgba(45,90,61,.3)", cursor: "pointer" }}>
+// //                 {getInitial()}
+// //               </div>
+// //             </div>
+// //           </header>
+
+// //           {/* Body */}
+// //           <div style={{ padding: "28px 32px", flex: 1 }}>
+
+// //             {/* Stat cards */}
+// //             <div className="fade-up" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 28 }}>
+// //               {[
+// //                 { label: "Total Products", value: totalProducts, sub: "Listed crops", dot: "#6aaa78" },
+// //                 { label: "Active Listings", value: activeListings, sub: "Selling now", dot: "#6aaa78" },
+// //                 { label: "Out of Stock",    value: outOfStock,    sub: "Need restocking", dot: "#f59e0b" },
+// //                 { label: "Inventory Value", value: `Rs.${(inventoryValue/1000).toFixed(1)}K`, sub: "Est. total value", dot: "#3b82f6" },
+// //               ].map(s => (
+// //                 <div key={s.label} style={{ background: "#fff", borderRadius: 16, padding: "20px 22px", border: "1px solid #eeebe4", boxShadow: "0 2px 8px rgba(0,0,0,.04)", position: "relative" }}>
+// //                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+// //                     <div style={{ width: 7, height: 7, borderRadius: "50%", background: s.dot }} />
+// //                     <div style={{ fontSize: 11, fontWeight: 700, color: "#a09a90", textTransform: "uppercase", letterSpacing: ".07em" }}>{s.label}</div>
 // //                   </div>
+// //                   <div style={{ fontSize: 32, fontWeight: 800, color: "#1c2b22", fontFamily: "'Playfair Display',serif", lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
+// //                   <div style={{ fontSize: 12, color: "#9b9590" }}>{s.sub}</div>
+// //                 </div>
+// //               ))}
+// //             </div>
 
-// //                   {p.trustScore > 0 && (
-// //                     <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
-// //                       <span style={{ fontSize: "13px" }}>⭐</span>
-// //                       <span style={{ fontSize: "13px", color: "#6b8070" }}>Trust Score:</span>
-// //                       <span style={{ fontSize: "13px", fontWeight: 700, color: "#2d5a3d" }}>{p.trustScore}%</span>
-// //                     </div>
-// //                   )}
+// //             {/* Filters row */}
+// //             <div className="fade-up" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+// //               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+// //                 {FILTERS.map(f => (
+// //                   <button key={f} onClick={() => setFilter(f)} className="filter-chip"
+// //                     style={{ padding: "7px 16px", borderRadius: 99, border: "1.5px solid", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all .18s", background: filter === f ? "#1a3a2a" : "#fff", color: filter === f ? "#fff" : "#6b8070", borderColor: filter === f ? "#1a3a2a" : "#e0ddd6" }}>
+// //                     {f}
+// //                   </button>
+// //                 ))}
+// //               </div>
+// //               <div style={{ fontSize: 13, color: "#9b9590", fontWeight: 500 }}>{filtered.length} result{filtered.length !== 1 ? "s" : ""}</div>
+// //             </div>
 
-// //                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-// //                     <div>
-// //                       <div style={{ fontSize: "11px", color: "#9b9b9b", marginBottom: "2px" }}>Price</div>
-// //                       <div style={{ fontSize: "15px", fontWeight: 700, color: "#1a3a2a" }}>Rs. {p.price}/kg</div>
+// //             {/* Product grid */}
+// //             {filtered.length === 0 ? (
+// //               <div className="fade-up" style={{ textAlign: "center", padding: "80px 20px" }}>
+// //                 <div style={{ width: 72, height: 72, borderRadius: 20, background: "linear-gradient(135deg,#f4f0e8,#eef5ec)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+// //                   <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={30} style={{ color: "#9b9590" }} />
+// //                 </div>
+// //                 <div style={{ fontSize: 18, fontWeight: 700, color: "#1c2b22", marginBottom: 8 }}>No products found</div>
+// //                 <div style={{ fontSize: 14, color: "#9b9590", marginBottom: 24 }}>Add your first crop to start selling</div>
+// //                 <button onClick={() => { setShowAdd(true); setForm(blankForm); }} className="action-btn"
+// //                   style={{ padding: "11px 24px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+// //                   + Add Product
+// //                 </button>
+// //               </div>
+// //             ) : (
+// //               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 20 }}>
+// //                 {filtered.map((p, i) => (
+// //                   <div key={p._id} className="prod-card fade-up"
+// //                     style={{ background: "#fff", borderRadius: 18, border: "1px solid #eeebe4", overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,.05)", transition: "all .22s", animationDelay: `${i * 0.04}s` }}>
+// //                     {/* Image */}
+// //                     <div style={{ height: 160, background: "linear-gradient(135deg,#e8f5e9,#f4f0e8)", position: "relative", overflow: "hidden" }}>
+// //                       {p.imageUrl ? (
+// //                         <img src={p.imageUrl} alt={p.cropName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+// //                       ) : (
+// //                         <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+// //                           <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={36} style={{ color: "#9b9590" }} />
+// //                         </div>
+// //                       )}
+// //                       {/* Status dot */}
+// //                       <div style={{ position: "absolute", top: 10, right: 10 }}>
+// //                         <StatusBadge s={p.status} />
+// //                       </div>
 // //                     </div>
-// //                     <div>
-// //                       <div style={{ fontSize: "11px", color: "#9b9b9b", marginBottom: "2px" }}>Stock</div>
-// //                       <div style={{ fontSize: "15px", fontWeight: 700, color: p.stock === 0 ? "#ef4444" : "#1a3a2a" }}>
-// //                         {p.stock} kg
+// //                     {/* Info */}
+// //                     <div style={{ padding: "16px 18px" }}>
+// //                       <div style={{ fontSize: 16, fontWeight: 700, color: "#1c2b22", marginBottom: 2 }}>{p.cropName}</div>
+// //                       <div style={{ fontSize: 12, color: "#9b9590", marginBottom: 14 }}>{p.category}</div>
+// //                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f9f7f4", borderRadius: 10, padding: "10px 14px", marginBottom: 14 }}>
+// //                         <div>
+// //                           <div style={{ fontSize: 10, fontWeight: 700, color: "#a09a90", textTransform: "uppercase", letterSpacing: ".06em" }}>Price</div>
+// //                           <div style={{ fontSize: 17, fontWeight: 800, color: "#1a3a2a" }}>Rs.{p.price.toLocaleString()}<span style={{ fontSize: 11, fontWeight: 500, color: "#9b9590" }}>/{p.unit || "kg"}</span></div>
+// //                         </div>
+// //                         <div style={{ textAlign: "right" }}>
+// //                           <div style={{ fontSize: 10, fontWeight: 700, color: "#a09a90", textTransform: "uppercase", letterSpacing: ".06em" }}>Stock</div>
+// //                           <div style={{ fontSize: 17, fontWeight: 800, color: p.stock === 0 ? "#ef4444" : "#1a3a2a" }}>{p.stock}<span style={{ fontSize: 11, fontWeight: 500, color: "#9b9590" }}>{p.unit || "kg"}</span></div>
+// //                         </div>
+// //                       </div>
+// //                       {p.createdAt && <div style={{ fontSize: 11, color: "#b0ada8", marginBottom: 14, display: "flex", alignItems: "center", gap: 5 }}>
+// //                         <Icon d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" size={12} />
+// //                         {new Date(p.createdAt).toLocaleDateString()}
+// //                       </div>}
+// //                       <div style={{ display: "flex", gap: 8 }}>
+// //                         <button onClick={() => { setShowEdit(p); setShowAdd(true); setForm({ cropName: p.cropName, category: p.category, price: String(p.price), stock: String(p.stock), description: p.description || "", unit: p.unit || "kg", imageUrl: p.imageUrl || "" }); }} className="action-btn"
+// //                           style={{ flex: 1, padding: "8px", background: "#f4f0e8", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#1a3a2a", cursor: "pointer" }}>
+// //                           Edit
+// //                         </button>
+// //                         <button onClick={() => handleDelete(p._id)} disabled={deleting === p._id} className="action-btn"
+// //                           style={{ flex: 1, padding: "8px", background: "#fff0f0", border: "1px solid #fcd0d0", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#c0392b", cursor: "pointer" }}>
+// //                           {deleting === p._id ? "…" : "Delete"}
+// //                         </button>
 // //                       </div>
 // //                     </div>
 // //                   </div>
+// //                 ))}
+// //               </div>
+// //             )}
+// //           </div>
+// //         </main>
+// //       </div>
 
-// //                   {p.harvestDate && (
-// //                     <div style={{ fontSize: "12px", color: "#6b8070", marginBottom: "12px" }}>
-// //                       🗓 {new Date(p.harvestDate).toLocaleDateString("en-CA")}
-// //                     </div>
+// //       {/* ══ ADD / EDIT MODAL ══ */}
+// //       {showAdd && (
+// //         <div onClick={e => { if (e.target === e.currentTarget) { setShowAdd(false); setShowEdit(null); } }}
+// //           style={{ position: "fixed", inset: 0, background: "rgba(10,20,14,.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+// //           <div className="slide-in" style={{ background: "#fff", borderRadius: 24, padding: "36px", width: "100%", maxWidth: 520, boxShadow: "0 32px 80px rgba(0,0,0,.25)", maxHeight: "90vh", overflowY: "auto" }}>
+// //             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+// //               <div>
+// //                 <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1a3a2a", fontFamily: "'Playfair Display',serif" }}>{showEdit ? "Edit Product" : "Add New Product"}</h2>
+// //                 <p style={{ fontSize: 13, color: "#9b9590", marginTop: 4 }}>{showEdit ? "Update your listing details" : "List a new crop for sale"}</p>
+// //               </div>
+// //               <button onClick={() => { setShowAdd(false); setShowEdit(null); }}
+// //                 style={{ background: "#f4f0e8", border: "none", width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#6b8070" }}>
+// //                 <Icon d="M6 18L18 6M6 6l12 12" size={16} />
+// //               </button>
+// //             </div>
+// //             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+// //               {[
+// //                 { label: "Crop Name *", key: "cropName", placeholder: "e.g. Tomato, Carrot…", type: "text" },
+// //                 { label: "Price (Rs.) *", key: "price", placeholder: "e.g. 450", type: "number" },
+// //                 { label: "Stock *", key: "stock", placeholder: "e.g. 100", type: "number" },
+// //                 { label: "Description", key: "description", placeholder: "Describe your crop…", type: "textarea" },
+// //               ].map(f => (
+// //                 <div key={f.key}>
+// //                   <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>{f.label}</label>
+// //                   {f.type === "textarea" ? (
+// //                     <textarea value={(form as any)[f.key]} onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))} placeholder={f.placeholder} rows={3}
+// //                       style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4", resize: "vertical" }} />
+// //                   ) : (
+// //                     <input type={f.type} value={(form as any)[f.key]} onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))} placeholder={f.placeholder}
+// //                       style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4" }} />
 // //                   )}
-
-// //                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-// //                     <span style={{
-// //                       fontSize: "12px", fontWeight: 700, padding: "4px 14px", borderRadius: "100px",
-// //                       background: p.status === "Active" ? "#e8f5e9" : p.status === "Out of Stock" ? "#f4f0e8" : "#fce4ec",
-// //                       color:      p.status === "Active" ? "#2d6a35" : p.status === "Out of Stock" ? "#6b8070" : "#c62828",
-// //                       border:     p.status === "Active" ? "1px solid #c8e6c9" : p.status === "Out of Stock" ? "1px solid #e0ddd6" : "1px solid #f48fb1",
-// //                     }}>
-// //                       {p.status}
-// //                     </span>
-// //                     <div style={{ display: "flex", gap: "8px" }}>
-// //                       <button onClick={() => { setSelected(p); setModal("edit"); }} title="Edit"
-// //                         style={{ width: "32px", height: "32px", borderRadius: "8px",
-// //                           border: "1px solid #e0ddd6", background: "white", cursor: "pointer",
-// //                           display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px" }}>
-// //                         ✏️
-// //                       </button>
-// //                       <button onClick={() => handleDelete(p._id)} disabled={deleting === p._id} title="Delete"
-// //                         style={{ width: "32px", height: "32px", borderRadius: "8px",
-// //                           border: "1px solid #fcd0d0", background: "#fff5f5", cursor: "pointer",
-// //                           display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px",
-// //                           opacity: deleting === p._id ? 0.5 : 1 }}>
-// //                         🗑️
-// //                       </button>
-// //                     </div>
+// //                 </div>
+// //               ))}
+// //               {/* Image upload */}
+// //               <div>
+// //                 <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>Product Photo</label>
+// //                 {/* Preview */}
+// //                 {form.imageUrl && (
+// //                   <div style={{ position: "relative", marginBottom: 10, borderRadius: 10, overflow: "hidden", border: "1.5px solid #e0ddd6", height: 140 }}>
+// //                     <img src={form.imageUrl} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+// //                     <button
+// //                       onClick={() => { setForm(prev => ({ ...prev, imageUrl: "" })); if (fileRef.current) fileRef.current.value = ""; }}
+// //                       style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,.6)", border: "none", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff" }}>
+// //                       <Icon d="M6 18L18 6M6 6l12 12" size={13} />
+// //                     </button>
 // //                   </div>
+// //                 )}
+// //                 {/* Drop zone */}
+// //                 <div
+// //                   onClick={() => fileRef.current?.click()}
+// //                   style={{ border: "2px dashed #d0ddd6", borderRadius: 11, padding: "20px", textAlign: "center", cursor: "pointer", background: "#fafaf8", transition: "all .2s" }}
+// //                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#6aaa78"; e.currentTarget.style.background = "#f0faf2"; }}
+// //                   onMouseLeave={e => { e.currentTarget.style.borderColor = "#d0ddd6"; e.currentTarget.style.background = "#fafaf8"; }}
+// //                   onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = "#6aaa78"; e.currentTarget.style.background = "#f0faf2"; }}
+// //                   onDragLeave={e => { e.currentTarget.style.borderColor = "#d0ddd6"; e.currentTarget.style.background = "#fafaf8"; }}
+// //                   onDrop={e => {
+// //                     e.preventDefault();
+// //                     e.currentTarget.style.borderColor = "#d0ddd6";
+// //                     e.currentTarget.style.background = "#fafaf8";
+// //                     const file = e.dataTransfer.files[0];
+// //                     if (file) {
+// //                       if (file.size > 5 * 1024 * 1024) { showToast("File too large. Max 5MB."); return; }
+// //                       const reader = new FileReader();
+// //                       reader.onload = ev => setForm(prev => ({ ...prev, imageUrl: ev.target?.result as string }));
+// //                       reader.readAsDataURL(file);
+// //                     }
+// //                   }}>
+// //                   <div style={{ width: 38, height: 38, borderRadius: 10, background: "#e8f5e9", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 8px" }}>
+// //                     <Icon d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" size={18} style={{ color: "#6aaa78" }} />
+// //                   </div>
+// //                   <div style={{ fontSize: 13, fontWeight: 600, color: "#1c2b22", marginBottom: 2 }}>
+// //                     {form.imageUrl ? "Change Photo" : "Upload Crop Photo"}
+// //                   </div>
+// //                   <div style={{ fontSize: 11, color: "#9b9590" }}>Click or drag & drop · JPG, PNG, WebP · Max 5MB</div>
+// //                 </div>
+// //                 <input
+// //                   ref={fileRef}
+// //                   type="file"
+// //                   accept="image/*"
+// //                   style={{ display: "none" }}
+// //                   onChange={e => {
+// //                     const file = e.target.files?.[0];
+// //                     if (!file) return;
+// //                     if (file.size > 5 * 1024 * 1024) { showToast("File too large. Max 5MB."); return; }
+// //                     const reader = new FileReader();
+// //                     reader.onload = ev => setForm(prev => ({ ...prev, imageUrl: ev.target?.result as string }));
+// //                     reader.readAsDataURL(file);
+// //                   }}
+// //                 />
+// //               </div>
+
+// //               {/* Category + Unit row */}
+// //               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+// //                 <div>
+// //                   <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>Category</label>
+// //                   <select value={form.category} onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))}
+// //                     style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4" }}>
+// //                     {["Vegetables","Fruits","Grains","Herbs","Other"].map(c => <option key={c}>{c}</option>)}
+// //                   </select>
+// //                 </div>
+// //                 <div>
+// //                   <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>Unit</label>
+// //                   <select value={form.unit} onChange={e => setForm(prev => ({ ...prev, unit: e.target.value }))}
+// //                     style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4" }}>
+// //                     {["kg","g","litre","bunch","piece"].map(u => <option key={u}>{u}</option>)}
+// //                   </select>
 // //                 </div>
 // //               </div>
-// //             ))}
+// //               <button onClick={handleSave} disabled={saving || !form.cropName || !form.price || !form.stock} className="action-btn"
+// //                 style={{ padding: "13px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", color: "#fff", border: "none", borderRadius: 11, fontSize: 15, fontWeight: 700, cursor: "pointer", opacity: saving ? 0.7 : 1, marginTop: 4 }}>
+// //                 {saving ? "Saving…" : showEdit ? "Update Product" : "Add Product"}
+// //               </button>
+// //             </div>
 // //           </div>
-// //         )}
-// //       </main>
-
-// //       {/* Modal */}
-// //       {(modal === "add" || modal === "edit") && (
-// //         <ProductModal
-// //           product={modal === "edit" ? selected : null}
-// //           onClose={() => { setModal(null); setSelected(null); }}
-// //           onSaved={fetchProducts}
-// //         />
+// //         </div>
 // //       )}
-// //     </div>
+
+// //       {/* Toast */}
+// //       {toast && (
+// //         <div className="toast" style={{ position: "fixed", bottom: 28, right: 28, background: "#1a3a2a", color: "#fff", padding: "13px 22px", borderRadius: 12, fontSize: 14, fontWeight: 600, boxShadow: "0 8px 24px rgba(0,0,0,.2)", zIndex: 300 }}>
+// //           {toast}
+// //         </div>
+// //       )}
+// //     </>
 // //   );
 // // }
 
 // "use client";
 
 // import { useState, useEffect, useRef } from "react";
-// import { useRouter, usePathname } from "next/navigation";
-// import api, { productAPI } from "@/lib/axios-proxy";
+// import { useRouter } from "next/navigation";
+// import { productAPI, profileAPI } from "@/lib/axios-proxy";
+// import api from "@/lib/axios-proxy";
 
-// // ── Types ──────────────────────────────────────────────────
+// interface User    { _id: string; name: string; email: string; role: string; }
+// interface Profile { farmName: string; district: string; }
 // interface Product {
-//   _id: string; cropName: string; category: string; type: string;
-//   price: number; stock: number; harvestDate?: string;
-//   organicTreatmentHistory?: string; trustScore: number;
-//   status: "Active" | "Out of Stock" | "Inactive";
-//   imageUrl?: string;
+//   _id: string; cropName: string; category: string; price: number;
+//   stock: number; status: string; imageUrl?: string; createdAt?: string;
+//   description?: string; unit?: string;
 // }
-
-// const CATEGORIES = ["Leafy Green", "Root", "Fruit", "Grain", "Herb", "Other"];
-// const TYPES      = ["Organic", "Conventional"];
 
 // const NAV = [
-//   { label: "Overview",    href: "/dashboard/farmer"             },
-//   { label: "Crop Doctor", href: "/dashboard/farmer/crop-doctor" },
-//   { label: "My Products", href: "/dashboard/farmer/products"    },
-//   { label: "Orders",      href: "/dashboard/farmer/orders"      },
-//   { label: "Weather",     href: "/dashboard/farmer/weather"     },
+//   { label: "Overview",    href: "/dashboard/farmer",             icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
+//   { label: "Crop Doctor", href: "/dashboard/farmer/crop-doctor", icon: "M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" },
+//   { label: "My Products", href: "/dashboard/farmer/products",    icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
+//   { label: "Orders",      href: "/dashboard/farmer/orders",      icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
+//   { label: "Weather",     href: "/dashboard/farmer/weather",     icon: "M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" },
+//   { label: "Earnings",    href: "/dashboard/farmer/earnings",    icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
 // ];
 
-// const labelStyle: React.CSSProperties = {
-//   fontSize: "11px", fontWeight: 700, color: "#6b8070",
-//   textTransform: "uppercase", letterSpacing: "0.06em",
-//   display: "block", marginBottom: "5px",
-// };
-// const inputStyle: React.CSSProperties = {
-//   width: "100%", padding: "10px 13px",
-//   border: "1.5px solid #e0ddd6", borderRadius: "9px",
-//   fontFamily: "'DM Sans',sans-serif", fontSize: "13px",
-//   color: "#1a3a2a", background: "white", outline: "none",
-//   boxSizing: "border-box",
-// };
+// const CATEGORIES = ["All", "Vegetables", "Fruits", "Grains", "Herbs", "Other"];
+// const FILTERS    = ["All", "Active", "Out of Stock", "Inactive"];
 
-// async function saveProduct(
-//   data: { cropName: string; category: string; type: string; price: string; stock: string; harvestDate: string; organicTreatmentHistory: string; imageFile: File | null; },
-//   productId?: string
-// ) {
-//   const form = new FormData();
-//   form.append("cropName", data.cropName);
-//   form.append("category", data.category);
-//   form.append("type",     data.type);
-//   form.append("price",    data.price);
-//   form.append("stock",    data.stock);
-//   if (data.harvestDate)             form.append("harvestDate",             data.harvestDate);
-//   if (data.organicTreatmentHistory) form.append("organicTreatmentHistory", data.organicTreatmentHistory);
-//   if (data.imageFile)               form.append("image", data.imageFile);
-//   const config = { headers: { "Content-Type": "multipart/form-data" } };
-//   return productId
-//     ? api.put(`/products/${productId}`, form, config)
-//     : api.post("/products", form, config);
-// }
+// const Icon = ({ d, size = 18, style }: { d: string; size?: number; style?: React.CSSProperties }) => (
+//   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+//     strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" style={style}>
+//     <path d={d} />
+//   </svg>
+// );
 
-// // ── Add / Edit Modal ───────────────────────────────────────
-// function ProductModal({ product, onClose, onSaved }: { product: Product | null; onClose: () => void; onSaved: () => void; }) {
-//   const isEdit       = !!product;
-//   const fileInputRef = useRef<HTMLInputElement>(null);
-
-//   const [form, setForm] = useState({
-//     cropName:                product?.cropName                  || "",
-//     category:                product?.category                  || "",
-//     type:                    product?.type                      || "",
-//     price:                   product?.price?.toString()         || "",
-//     stock:                   product?.stock?.toString()         || "",
-//     harvestDate:             product?.harvestDate?.slice(0, 10) || "",
-//     organicTreatmentHistory: product?.organicTreatmentHistory   || "",
-//   });
-//   const [imageFile,    setImageFile]    = useState<File | null>(null);
-//   const [imagePreview, setImagePreview] = useState<string>(
-//     product?.imageUrl ? `http://localhost:5000${product.imageUrl}` : ""
-//   );
-//   const [loading, setLoading] = useState(false);
-//   const [error,   setError]   = useState("");
-
-//   const set = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
-
-//   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const file = e.target.files?.[0];
-//     if (!file) return;
-//     setImageFile(file);
-//     setImagePreview(URL.createObjectURL(file));
+// const StatusBadge = ({ s }: { s: string }) => {
+//   const map: Record<string, [string, string]> = {
+//     Active:   ["#dcfce7","#16a34a"], active: ["#dcfce7","#16a34a"],
+//     approved: ["#dcfce7","#16a34a"], Inactive: ["#fee2e2","#dc2626"],
+//     "Out of Stock": ["#fef9c3","#a16207"],
 //   };
-
-//   const handleSave = async () => {
-//     if (!form.cropName || !form.category || !form.type || !form.price || !form.stock) {
-//       setError("Please fill all required fields."); return;
-//     }
-//     setLoading(true); setError("");
-//     try {
-//       await saveProduct({ ...form, imageFile }, isEdit ? product!._id : undefined);
-//       onSaved(); onClose();
-//     } catch (err: any) {
-//       setError(err.response?.data?.message || "Failed to save product.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
+//   const [bg, col] = map[s] ?? ["#f3f4f6","#6b7280"];
 //   return (
-//     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", zIndex: 200,
-//       display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
-//       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-//       <div style={{ background: "#f9f7f3", borderRadius: "18px", padding: "28px",
-//         width: "100%", maxWidth: "560px", maxHeight: "90vh", overflowY: "auto" }}>
-
-//         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "22px" }}>
-//           <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#1a3a2a", margin: 0 }}>
-//             {isEdit ? "Edit Product" : "Add New Product"}
-//           </h2>
-//           <button onClick={onClose}
-//             style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer", color: "#6b8070" }}>✕</button>
-//         </div>
-
-//         {error && (
-//           <div style={{ background: "#fff1f1", border: "1px solid #fcd0d0", borderRadius: "9px",
-//             padding: "10px 13px", color: "#c0392b", fontSize: "13px", marginBottom: "14px" }}>
-//             {error}
-//           </div>
-//         )}
-
-//         {/* Image Upload */}
-//         <div style={{ marginBottom: "18px" }}>
-//           <label style={labelStyle}>Product Image (optional)</label>
-//           <div onClick={() => fileInputRef.current?.click()}
-//             style={{ border: "2px dashed #c8e6c9", borderRadius: "12px", padding: "14px",
-//               cursor: "pointer", textAlign: "center", background: imagePreview ? "#f0fdf4" : "#fff",
-//               height: "120px", display: "flex", alignItems: "center", justifyContent: "center",
-//               position: "relative", overflow: "hidden" }}>
-//             {imagePreview ? (
-//               <div style={{ position: "relative", width: "100%", height: "100%" }}>
-//                 <img src={imagePreview} alt="preview"
-//                   style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px" }} />
-//                 <div style={{ position: "absolute", top: 4, right: 4, background: "#1a3a2a",
-//                   color: "#fff", borderRadius: "6px", padding: "3px 8px", fontSize: "11px", fontWeight: 700 }}>
-//                   Change
-//                 </div>
-//               </div>
-//             ) : (
-//               <div>
-//                 <div style={{ fontSize: "13px", color: "#6b8070", fontWeight: 600 }}>Click to upload image</div>
-//                 <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "3px" }}>JPG, PNG or WebP · Max 5MB</div>
-//               </div>
-//             )}
-//           </div>
-//           <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
-//             onChange={handleImageChange} style={{ display: "none" }} />
-//           {imageFile && (
-//             <div style={{ fontSize: "11px", color: "#6b8070", marginTop: "4px", display: "flex", alignItems: "center", gap: 6 }}>
-//               {imageFile.name} ({(imageFile.size / 1024).toFixed(0)} KB)
-//               <button onClick={() => { setImageFile(null); setImagePreview(product?.imageUrl ? `http://localhost:5000${product.imageUrl}` : ""); }}
-//                 style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "11px" }}>
-//                 Remove
-//               </button>
-//             </div>
-//           )}
-//         </div>
-
-//         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
-//           <div>
-//             <label style={labelStyle}>Crop Name *</label>
-//             <input type="text" placeholder="e.g. Organic Spinach"
-//               value={form.cropName} onChange={e => set("cropName", e.target.value)} style={inputStyle} />
-//           </div>
-//           <div>
-//             <label style={labelStyle}>Category *</label>
-//             <select value={form.category} onChange={e => set("category", e.target.value)} style={inputStyle}>
-//               <option value="">Select</option>
-//               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-//             </select>
-//           </div>
-//           <div>
-//             <label style={labelStyle}>Price (Rs/kg) *</label>
-//             <input type="number" placeholder="150" min="1"
-//               value={form.price} onChange={e => set("price", e.target.value)} style={inputStyle} />
-//           </div>
-//           <div>
-//             <label style={labelStyle}>Stock (kg) *</label>
-//             <input type="number" placeholder="25" min="0"
-//               value={form.stock} onChange={e => set("stock", e.target.value)} style={inputStyle} />
-//           </div>
-//           <div>
-//             <label style={labelStyle}>Harvest Date</label>
-//             <input type="date" value={form.harvestDate}
-//               onChange={e => set("harvestDate", e.target.value)} style={inputStyle} />
-//           </div>
-//           <div>
-//             <label style={labelStyle}>Type *</label>
-//             <select value={form.type} onChange={e => set("type", e.target.value)} style={inputStyle}>
-//               <option value="">Select</option>
-//               {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-//             </select>
-//           </div>
-//         </div>
-
-//         <div style={{ marginBottom: "22px" }}>
-//           <label style={labelStyle}>Organic Treatment History (optional)</label>
-//           <textarea placeholder="Describe treatments used..."
-//             value={form.organicTreatmentHistory}
-//             onChange={e => set("organicTreatmentHistory", e.target.value)}
-//             rows={3} style={{ ...inputStyle, resize: "vertical", height: "auto" }} />
-//         </div>
-
-//         <button onClick={handleSave} disabled={loading} style={{
-//           width: "100%", padding: "12px",
-//           background: loading ? "#a8d5b5" : "linear-gradient(135deg,#1a3a2a,#2d5a3d)",
-//           color: "white", border: "none", borderRadius: "9px",
-//           fontFamily: "'DM Sans',sans-serif", fontSize: "14px", fontWeight: 700,
-//           cursor: loading ? "not-allowed" : "pointer",
-//         }}>
-//           {loading ? "Saving…" : isEdit ? "Save Changes" : "List Product"}
-//         </button>
-//       </div>
-//     </div>
+//     <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 99, background: bg, color: col }}>
+//       {s === "approved" ? "Active" : s}
+//     </span>
 //   );
-// }
+// };
 
-// // ── Main Page ──────────────────────────────────────────────
-// export default function MyProductsPage() {
-//   const router   = useRouter();
-//   const pathname = usePathname();
+// export default function ProductsPage() {
+//   const router = useRouter();
 
-//   const [user,     setUser]     = useState<{ name: string } | null>(null);
-//   const [products, setProducts] = useState<Product[]>([]);
-//   const [loading,  setLoading]  = useState(true);
-//   const [search,   setSearch]   = useState("");
-//   const [modal,    setModal]    = useState<"add" | "edit" | null>(null);
-//   const [selected, setSelected] = useState<Product | null>(null);
-//   const [deleting, setDeleting] = useState<string | null>(null);
-//   const [error,    setError]    = useState("");
+//   const [user,          setUser]          = useState<User | null>(null);
+//   const [profile,       setProfile]       = useState<Profile | null>(null);
+//   const [sub,           setSub]           = useState<any>(null);
+//   const [products,      setProducts]      = useState<Product[]>([]);
+//   const [loading,       setLoading]       = useState(true);
+//   const [sideCollapsed, setSideCollapsed] = useState(false);
+//   const [search,        setSearch]        = useState("");
+//   const [filter,        setFilter]        = useState("All");
+//   const [catFilter,     setCatFilter]     = useState("All");
+//   const [showAdd,       setShowAdd]       = useState(false);
+//   const [showEdit,      setShowEdit]      = useState<Product | null>(null);
+//   const [saving,        setSaving]        = useState(false);
+//   const [deleting,      setDeleting]      = useState<string | null>(null);
+//   const [toast,         setToast]         = useState("");
+
+//   const blankForm = { cropName: "", category: "Vegetables", price: "", stock: "", description: "", unit: "kg" };
+//   const [form,      setForm]      = useState(blankForm);
+//   const [imageFile, setImageFile] = useState<File | null>(null);
+//   const [imgPreview,setImgPreview]= useState<string>("");
+//   const fileRef = useRef<HTMLInputElement>(null);
+
+//   const SBW = sideCollapsed ? 68 : 220;
+
+//   const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; };
+//   const getInitial = () => (user?.name || "F")[0].toUpperCase();
 
 //   useEffect(() => {
 //     const stored = localStorage.getItem("agriai_user");
 //     const token  = localStorage.getItem("agriai_token");
 //     if (!stored || !token) { router.push("/"); return; }
 //     const u = JSON.parse(stored);
-//     if (u.role !== "farmer" && u.role !== "admin") { router.push("/"); return; }
 //     setUser(u);
-//     fetchProducts();
+//     loadData(u);
 //   }, []);
 
-//   const fetchProducts = async () => {
-//     setLoading(true); setError("");
+//   const loadData = async (u: User) => {
 //     try {
-//       const { data } = await productAPI.getMyProducts();
-//       setProducts(Array.isArray(data) ? data : data.products || []);
-//     } catch (err: any) {
-//       setError(err.response?.data?.message || "Failed to load products.");
-//     } finally {
-//       setLoading(false);
-//     }
+//       const [profR, prodR, subR] = await Promise.allSettled([
+//         profileAPI.getMe(),
+//         productAPI.getMyProducts(),
+//         api.get("/subscriptions/my"),
+//       ]);
+//       if (profR.status === "fulfilled") setProfile({ farmName: profR.value.data.farmName || "", district: profR.value.data.district || "" });
+//       if (prodR.status === "fulfilled") {
+//         const raw = prodR.value.data?.products || prodR.value.data || [];
+//         setProducts(Array.isArray(raw) ? raw : []);
+//       }
+//       if (subR.status === "fulfilled") setSub(subR.value.data);
+//     } catch { }
+//     setLoading(false);
+//   };
+
+//   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 3000); };
+
+//   const resetModal = () => {
+//     setShowAdd(false); setShowEdit(null);
+//     setForm(blankForm); setImageFile(null); setImgPreview("");
+//     if (fileRef.current) fileRef.current.value = "";
+//   };
+
+//   const handleFile = (file: File) => {
+//     if (file.size > 5 * 1024 * 1024) { showToast("File too large. Max 5MB."); return; }
+//     setImageFile(file);
+//     const reader = new FileReader();
+//     reader.onload = e => setImgPreview(e.target?.result as string);
+//     reader.readAsDataURL(file);
+//   };
+
+//   const handleSave = async () => {
+//     if (!form.cropName || !form.price || !form.stock) return;
+//     setSaving(true);
+//     try {
+//       const fd = new FormData();
+//       fd.append("cropName",    form.cropName);
+//       fd.append("category",    form.category);
+//       fd.append("price",       String(Number(form.price)));
+//       fd.append("stock",       String(Number(form.stock)));
+//       fd.append("description", form.description);
+//       fd.append("unit",        form.unit);
+//       if (imageFile) fd.append("image", imageFile);
+
+//       if (showEdit) {
+//         const { data } = await productAPI.update(showEdit._id, fd);
+//         setProducts(prev => prev.map(p => p._id === showEdit._id ? { ...p, ...(data.product || data) } : p));
+//         showToast("Product updated!");
+//       } else {
+//         const { data } = await productAPI.create(fd);
+//         setProducts(prev => [...prev, data.product || data]);
+//         showToast("Product added!");
+//       }
+//       resetModal();
+//     } catch (e: any) { showToast(e.response?.data?.message || "Error saving product"); }
+//     setSaving(false);
 //   };
 
 //   const handleDelete = async (id: string) => {
-//     if (!confirm("Delete this product? This cannot be undone.")) return;
 //     setDeleting(id);
 //     try {
-//       await productAPI.remove(id);
+//       await productAPI.delete(id);
 //       setProducts(prev => prev.filter(p => p._id !== id));
-//     } catch (err: any) {
-//       alert(err.response?.data?.message || "Delete failed.");
-//     } finally {
-//       setDeleting(null);
-//     }
+//       showToast("Product deleted.");
+//     } catch { showToast("Failed to delete."); }
+//     setDeleting(null);
 //   };
 
-//   const handleLogout = () => {
-//     localStorage.removeItem("agriai_token");
-//     localStorage.removeItem("agriai_user");
-//     router.push("/");
-//   };
+//   const handleLogout = () => { localStorage.removeItem("agriai_token"); localStorage.removeItem("agriai_user"); router.push("/"); };
 
-//   const filtered  = products.filter(p => p.cropName.toLowerCase().includes(search.toLowerCase()));
-//   const getInitial = () => (user?.name || "F")[0].toUpperCase();
-
-//   const statusStyle = (s: string) => ({
-//     background: s === "Active" ? "#e8f5e9" : s === "Out of Stock" ? "#f4f0e8" : "#fce4ec",
-//     color:      s === "Active" ? "#2d6a35" : s === "Out of Stock" ? "#6b8070" : "#c62828",
-//     border:     `1px solid ${s === "Active" ? "#c8e6c9" : s === "Out of Stock" ? "#e0ddd6" : "#f48fb1"}`,
+//   const filtered = products.filter(p => {
+//     const matchSearch = p.cropName.toLowerCase().includes(search.toLowerCase());
+//     const matchFilter = filter === "All" || (filter === "Active" && (p.status === "Active" || p.status === "approved")) || (filter === "Out of Stock" && p.stock === 0) || p.status === filter;
+//     const matchCat    = catFilter === "All" || p.category === catFilter;
+//     return matchSearch && matchFilter && matchCat;
 //   });
 
+//   const totalProducts   = products.length;
+//   const activeListings  = products.filter(p => p.status === "Active" || p.status === "approved").length;
+//   const outOfStock      = products.filter(p => p.stock === 0).length;
+//   const inventoryValue  = products.reduce((a, p) => a + p.price * p.stock, 0);
+
+//   if (loading) return (
+//     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f4f0e8", fontFamily: "'DM Sans',sans-serif" }}>
+//       <div style={{ textAlign: "center" }}>
+//         <div style={{ width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#1a3a2a,#6aaa78)", margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+//           <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={22} style={{ color: "#fff" }} />
+//         </div>
+//         <div style={{ color: "#2d5a3d", fontWeight: 700, fontSize: 15 }}>Loading products…</div>
+//       </div>
+//     </div>
+//   );
+
 //   return (
-//     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'DM Sans',sans-serif", background: "#f4f0e8" }}>
+//     <>
+//       <style>{`
+//         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+//         *{box-sizing:border-box;margin:0;padding:0;}
+//         body{font-family:'DM Sans',sans-serif;background:#f2efe8;}
+//         ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:#d0cdc6;border-radius:10px;}
+//         .nav-btn:hover{background:rgba(106,170,120,.15)!important;color:#fff!important;}
+//         .action-btn:hover{opacity:.88;}
+//         .prod-card:hover{box-shadow:0 12px 36px rgba(26,58,42,.13)!important;transform:translateY(-3px);}
+//         .filter-chip:hover{background:#e8f5e9!important;color:#1a3a2a!important;}
+//         input:focus,textarea:focus,select:focus{outline:none;border-color:#6aaa78!important;box-shadow:0 0 0 3px rgba(106,170,120,.15);}
+//         @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+//         .fade-up{animation:fadeUp .32s ease both;}
+//         @keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+//         .slide-in{animation:slideIn .28s ease both;}
+//         @keyframes toastIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+//         .toast{animation:toastIn .25s ease both;}
+//       `}</style>
 
-//       {/* ══ SIDEBAR ══ */}
-//       <aside style={{ width: 190, background: "linear-gradient(180deg,#1a3a2a 0%,#0f2418 100%)",
-//         display: "flex", flexDirection: "column", position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 50 }}>
-//         <div style={{ padding: "22px 20px 16px", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
-//           <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 900, fontSize: 22, color: "#fff" }}>
-//             Ag<span style={{ color: "#6aaa78" }}>real</span>
-//           </div>
-//         </div>
-//         <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
-//           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-//             <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#6aaa78",
-//               display: "flex", alignItems: "center", justifyContent: "center",
-//               fontSize: 15, fontWeight: 700, color: "#fff" }}>
-//               {getInitial()}
-//             </div>
-//             <div>
-//               <div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{user?.name || "Farmer"}</div>
-//               <div style={{ color: "rgba(255,255,255,.45)", fontSize: 11 }}>My Farm</div>
-//             </div>
-//           </div>
-//         </div>
-//         <nav style={{ flex: 1, padding: "10px 0", overflowY: "auto" }}>
-//           {NAV.map(item => {
-//             const isActive = pathname === item.href;
-//             return (
-//               <button key={item.href} onClick={() => router.push(item.href)} style={{
-//                 width: "100%", display: "flex", alignItems: "center",
-//                 padding: "10px 20px", border: "none",
-//                 background: isActive ? "rgba(106,170,120,.2)" : "transparent",
-//                 borderLeft: isActive ? "3px solid #6aaa78" : "3px solid transparent",
-//                 color: isActive ? "#fff" : "rgba(255,255,255,.55)",
-//                 fontSize: 13, fontWeight: isActive ? 600 : 400,
-//                 cursor: "pointer", transition: "all .2s", textAlign: "left",
-//               }}>
-//                 {item.label}
-//               </button>
-//             );
-//           })}
-//         </nav>
-//         <div style={{ padding: "10px 0", borderTop: "1px solid rgba(255,255,255,.08)" }}>
-//           <button onClick={handleLogout} style={{ width: "100%", display: "flex", alignItems: "center",
-//             padding: "10px 20px", border: "none", background: "transparent",
-//             color: "#ef4444", fontSize: 13, cursor: "pointer", fontWeight: 600 }}>
-//             Sign Out
-//           </button>
-//         </div>
-//       </aside>
+//       <div style={{ display: "flex", minHeight: "100vh", background: "#f2efe8" }}>
 
-//       {/* ══ MAIN ══ */}
-//       <main style={{ marginLeft: 190, flex: 1, padding: "28px 32px" }}>
-
-//         {/* Header */}
-//         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "22px" }}>
-//           <div>
-//             <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#1a3a2a", margin: 0 }}>My Products</h1>
-//             <p style={{ fontSize: "13px", color: "#6b8070", marginTop: "3px" }}>
-//               {products.length} product{products.length !== 1 ? "s" : ""} · {products.filter(p => p.status === "Active").length} active
-//             </p>
+//         {/* ══ SIDEBAR ══ */}
+//         <aside style={{
+//           width: SBW, background: "linear-gradient(185deg,#1a3a2a 0%,#122a1c 60%,#0a1e11 100%)",
+//           display: "flex", flexDirection: "column", position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 60,
+//           transition: "width .28s cubic-bezier(.4,0,.2,1)", overflow: "hidden",
+//           boxShadow: "4px 0 24px rgba(0,0,0,.18)",
+//         }}>
+//           {/* Logo */}
+//           <div style={{ padding: sideCollapsed ? "18px 0" : "20px 20px 16px", borderBottom: "1px solid rgba(255,255,255,.07)", display: "flex", alignItems: "center", justifyContent: sideCollapsed ? "center" : "space-between" }}>
+//             {!sideCollapsed && (
+//               <div onClick={() => router.push("/")} style={{ fontFamily: "'Playfair Display',serif", fontWeight: 900, fontSize: 22, color: "#fff", cursor: "pointer", letterSpacing: "-0.5px" }}
+//                 onMouseEnter={e => (e.currentTarget.style.opacity = "0.75")} onMouseLeave={e => (e.currentTarget.style.opacity = "1")}>
+//                 Ag<span style={{ color: "#6aaa78" }}>real</span>
+//               </div>
+//             )}
+//             <button onClick={() => setSideCollapsed(p => !p)} className="action-btn"
+//               style={{ background: "rgba(255,255,255,.07)", border: "none", borderRadius: 8, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,.5)", flexShrink: 0 }}>
+//               <Icon d={sideCollapsed ? "M13 5l7 7-7 7M5 5l7 7-7 7" : "M11 19l-7-7 7-7m8 14l-7-7 7-7"} size={14} />
+//             </button>
 //           </div>
-//           <button onClick={() => { setSelected(null); setModal("add"); }} style={{
-//             padding: "10px 20px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)",
-//             color: "white", border: "none", borderRadius: "100px",
-//             fontFamily: "'DM Sans',sans-serif", fontSize: "13px", fontWeight: 600, cursor: "pointer",
-//           }}>
-//             + Add Product
-//           </button>
-//         </div>
-
-//         {/* Search */}
-//         <div style={{ marginBottom: "22px", position: "relative", maxWidth: "380px" }}>
-//           <input type="text" placeholder="Search products…"
-//             value={search} onChange={e => setSearch(e.target.value)}
-//             style={{ width: "100%", padding: "10px 14px 10px 14px", border: "1.5px solid #e0ddd6",
-//               borderRadius: "10px", fontFamily: "'DM Sans',sans-serif", fontSize: "13px",
-//               background: "white", outline: "none", boxSizing: "border-box" }} />
-//         </div>
-
-//         {/* Error */}
-//         {error && (
-//           <div style={{ background: "#fff1f1", border: "1px solid #fcd0d0", borderRadius: "10px",
-//             padding: "12px 16px", color: "#c0392b", fontSize: "13px", marginBottom: "18px",
-//             display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-//             <span>{error}</span>
-//             <button onClick={fetchProducts} style={{ background: "#1a3a2a", color: "#fff",
-//               border: "none", borderRadius: "7px", padding: "5px 12px", fontSize: "12px",
-//               fontWeight: 600, cursor: "pointer" }}>Retry</button>
-//           </div>
-//         )}
-
-//         {/* Grid — standardized cards */}
-//         {loading ? (
-//           <div style={{ textAlign: "center", padding: "80px", color: "#6b8070" }}>
-//             <div style={{ fontWeight: 600 }}>Loading products…</div>
-//           </div>
-//         ) : filtered.length === 0 ? (
-//           <div style={{ textAlign: "center", padding: "80px", color: "#c0bdb5" }}>
-//             <div style={{ fontSize: "15px", color: "#6b8070", fontWeight: 500 }}>
-//               {search ? `No products match "${search}"` : "No products yet. Click + Add Product to start selling."}
-//             </div>
-//           </div>
-//         ) : (
-//           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "16px" }}>
-//             {filtered.map(p => (
-//               <div key={p._id} style={{
-//                 background: "white", borderRadius: "14px",
-//                 border: "1px solid #e8e4dc", overflow: "hidden",
-//                 boxShadow: "0 1px 6px rgba(0,0,0,.05)",
-//                 display: "flex", flexDirection: "column",
-//               }}>
-//                 {/* ── Image — fixed 160px, consistent aspect ratio ── */}
-//                 <div style={{ height: "160px", background: "#f0fdf4", position: "relative",
-//                   flexShrink: 0, overflow: "hidden" }}>
-//                   {p.imageUrl ? (
-//                     <img src={`http://localhost:5000${p.imageUrl}`} alt={p.cropName}
-//                       style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-//                       onError={e => {
-//                         (e.target as HTMLImageElement).style.display = "none";
-//                         (e.target as HTMLImageElement).parentElement!.style.background = "#f4f0e8";
-//                       }} />
-//                   ) : (
-//                     <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center",
-//                       justifyContent: "center", background: "#f0fdf4" }}>
-//                       <span style={{ fontSize: "13px", color: "#9ca3af", fontWeight: 500 }}>No image</span>
-//                     </div>
-//                   )}
-//                   {p.type === "Organic" && (
-//                     <div style={{ position: "absolute", top: "8px", right: "8px",
-//                       background: "#e8f5e9", color: "#2d6a35", fontSize: "10px",
-//                       fontWeight: 700, padding: "3px 9px", borderRadius: "100px",
-//                       border: "1px solid #c8e6c9" }}>
-//                       Organic
+//           {/* User card */}
+//           <div style={{ padding: sideCollapsed ? "14px 0" : "14px 16px", borderBottom: "1px solid rgba(255,255,255,.07)", display: sideCollapsed ? "flex" : "block", justifyContent: "center" }}>
+//             <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: sideCollapsed ? "center" : "flex-start" }}>
+//               <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6aaa78,#2d5a3d)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#fff", border: "2px solid rgba(255,255,255,.15)", flexShrink: 0 }}>
+//                 {getInitial()}
+//               </div>
+//               {!sideCollapsed && (
+//                 <div>
+//                   <div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{user?.name || "Farmer"}</div>
+//                   <div style={{ color: "rgba(255,255,255,.4)", fontSize: 10 }}>{profile?.farmName || "My Farm"}</div>
+//                   {sub?.isActive && (
+//                     <div style={{ marginTop: 4, display: "inline-flex", alignItems: "center", gap: 3, background: "rgba(106,170,120,.25)", borderRadius: 99, padding: "1px 8px", fontSize: 9, color: "#6aaa78", fontWeight: 700 }}>
+//                       <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#6aaa78", display: "inline-block" }} />
+//                       {sub.status === "trialing" ? "Free Trial" : "Active"}
 //                     </div>
 //                   )}
 //                 </div>
+//               )}
+//             </div>
+//           </div>
+//           {/* Nav */}
+//           <nav style={{ flex: 1, padding: "10px 0", overflowY: "auto" }}>
+//             {!sideCollapsed && <div style={{ padding: "10px 16px 4px", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.25)", textTransform: "uppercase", letterSpacing: ".1em" }}>Navigation</div>}
+//             {NAV.map(item => {
+//               const active = item.href === "/dashboard/farmer/products";
+//               return (
+//                 <button key={item.href} onClick={() => router.push(item.href)} className="nav-btn"
+//                   title={sideCollapsed ? item.label : undefined}
+//                   style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: sideCollapsed ? "12px 0" : "9px 16px", justifyContent: sideCollapsed ? "center" : "flex-start", border: "none", background: active ? "rgba(106,170,120,.18)" : "transparent", borderLeft: active ? "3px solid #6aaa78" : "3px solid transparent", color: active ? "#fff" : "rgba(255,255,255,.5)", fontSize: 13, fontWeight: active ? 600 : 400, cursor: "pointer", transition: "all .18s", textAlign: "left" }}>
+//                   <Icon d={item.icon} size={17} style={{ flexShrink: 0 }} />
+//                   {!sideCollapsed && <span>{item.label}</span>}
+//                   {!sideCollapsed && active && <div style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: "#6aaa78" }} />}
+//                 </button>
+//               );
+//             })}
+//           </nav>
+//           {/* Bottom */}
+//           <div style={{ padding: "10px 0", borderTop: "1px solid rgba(255,255,255,.07)" }}>
+//             <button onClick={() => router.push("/dashboard/farmer/settings")} className="nav-btn" title={sideCollapsed ? "Settings" : undefined}
+//               style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, justifyContent: sideCollapsed ? "center" : "flex-start", padding: sideCollapsed ? "11px 0" : "9px 16px", border: "none", background: "transparent", color: "rgba(255,255,255,.4)", fontSize: 13, cursor: "pointer", transition: "all .18s" }}>
+//               <Icon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" size={16} style={{ flexShrink: 0 }} />
+//               {!sideCollapsed && <span>Settings</span>}
+//             </button>
+//             <button onClick={handleLogout} className="nav-btn" title={sideCollapsed ? "Sign Out" : undefined}
+//               style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, justifyContent: sideCollapsed ? "center" : "flex-start", padding: sideCollapsed ? "11px 0" : "9px 16px", border: "none", background: "transparent", color: "#f87171", fontSize: 13, cursor: "pointer", fontWeight: 600, transition: "all .18s" }}>
+//               <Icon d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" size={16} style={{ flexShrink: 0 }} />
+//               {!sideCollapsed && <span>Sign Out</span>}
+//             </button>
+//           </div>
+//         </aside>
 
-//                 {/* ── Card body ── */}
-//                 <div style={{ padding: "14px", flex: 1, display: "flex", flexDirection: "column", gap: 0 }}>
-//                   <div style={{ marginBottom: "10px" }}>
-//                     <div style={{ fontSize: "14px", fontWeight: 700, color: "#1a3a2a",
-//                       whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-//                       {p.cropName}
-//                     </div>
-//                     <div style={{ fontSize: "11px", color: "#9b9b9b", marginTop: "1px" }}>{p.category}</div>
+//         {/* ══ MAIN ══ */}
+//         <main style={{ marginLeft: SBW, flex: 1, display: "flex", flexDirection: "column", transition: "margin-left .28s cubic-bezier(.4,0,.2,1)", minHeight: "100vh" }}>
+
+//           {/* Topbar */}
+//           <header style={{ background: "rgba(255,255,255,.92)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(0,0,0,.07)", padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 40 }}>
+//             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+//               <button onClick={() => router.back()} className="action-btn"
+//                 style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, background: "#f4f0e8", border: "1px solid #e0ddd6", cursor: "pointer", flexShrink: 0 }}>
+//                 <Icon d="M15 19l-7-7 7-7" size={16} style={{ color: "#1a3a2a" }} />
+//               </button>
+//               <div>
+//                 <div style={{ fontSize: 19, fontWeight: 700, color: "#1c2b22", letterSpacing: "-.3px" }}>
+//                   {greeting()}, <span style={{ color: "#2d5a3d" }}>{user?.name?.split(" ")[0]}</span>
+//                 </div>
+//                 <div style={{ fontSize: 12, color: "#9b9590", marginTop: 2 }}>
+//                   {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+//                   {profile?.district ? ` · ${profile.district}` : ""}
+//                 </div>
+//               </div>
+//             </div>
+//             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+//               {/* Search */}
+//               <div style={{ position: "relative" }}>
+//                 <Icon d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" size={15} style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "#9b9590" }} />
+//                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search crops…"
+//                   style={{ paddingLeft: 34, paddingRight: 14, height: 36, border: "1px solid #e0ddd6", borderRadius: 9, background: "#f9f7f4", fontSize: 13, color: "#1a3a2a", width: 200, fontFamily: "'DM Sans',sans-serif" }} />
+//               </div>
+//               {/* Add Product */}
+//               <button onClick={() => { setShowAdd(true); setShowEdit(null); setForm(blankForm); setImageFile(null); setImgPreview(""); if (fileRef.current) fileRef.current.value = ""; }} className="action-btn"
+//                 style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 4px 14px rgba(26,58,42,.25)" }}>
+//                 <Icon d="M12 4v16m8-8H4" size={15} />
+//                 Add Product
+//               </button>
+//               {/* Avatar */}
+//               <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6aaa78,#2d5a3d)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 15, border: "2px solid rgba(255,255,255,.8)", boxShadow: "0 2px 8px rgba(45,90,61,.3)", cursor: "pointer" }}>
+//                 {getInitial()}
+//               </div>
+//             </div>
+//           </header>
+
+//           {/* Body */}
+//           <div style={{ padding: "28px 32px", flex: 1 }}>
+
+//             {/* Stat cards */}
+//             <div className="fade-up" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 28 }}>
+//               {[
+//                 { label: "Total Products", value: totalProducts, sub: "Listed crops", dot: "#6aaa78" },
+//                 { label: "Active Listings", value: activeListings, sub: "Selling now", dot: "#6aaa78" },
+//                 { label: "Out of Stock",    value: outOfStock,    sub: "Need restocking", dot: "#f59e0b" },
+//                 { label: "Inventory Value", value: `Rs.${(inventoryValue/1000).toFixed(1)}K`, sub: "Est. total value", dot: "#3b82f6" },
+//               ].map(s => (
+//                 <div key={s.label} style={{ background: "#fff", borderRadius: 16, padding: "20px 22px", border: "1px solid #eeebe4", boxShadow: "0 2px 8px rgba(0,0,0,.04)", position: "relative" }}>
+//                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+//                     <div style={{ width: 7, height: 7, borderRadius: "50%", background: s.dot }} />
+//                     <div style={{ fontSize: 11, fontWeight: 700, color: "#a09a90", textTransform: "uppercase", letterSpacing: ".07em" }}>{s.label}</div>
 //                   </div>
+//                   <div style={{ fontSize: 32, fontWeight: 800, color: "#1c2b22", fontFamily: "'Playfair Display',serif", lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
+//                   <div style={{ fontSize: 12, color: "#9b9590" }}>{s.sub}</div>
+//                 </div>
+//               ))}
+//             </div>
 
-//                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "10px" }}>
-//                     <div>
-//                       <div style={{ fontSize: "10px", color: "#b0ada8" }}>Price</div>
-//                       <div style={{ fontSize: "14px", fontWeight: 700, color: "#1a3a2a" }}>Rs.{p.price}<span style={{ fontSize: "10px", fontWeight: 400, color: "#9b9b9b" }}>/kg</span></div>
+//             {/* Filters row */}
+//             <div className="fade-up" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+//               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+//                 {FILTERS.map(f => (
+//                   <button key={f} onClick={() => setFilter(f)} className="filter-chip"
+//                     style={{ padding: "7px 16px", borderRadius: 99, border: "1.5px solid", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all .18s", background: filter === f ? "#1a3a2a" : "#fff", color: filter === f ? "#fff" : "#6b8070", borderColor: filter === f ? "#1a3a2a" : "#e0ddd6" }}>
+//                     {f}
+//                   </button>
+//                 ))}
+//               </div>
+//               <div style={{ fontSize: 13, color: "#9b9590", fontWeight: 500 }}>{filtered.length} result{filtered.length !== 1 ? "s" : ""}</div>
+//             </div>
+
+//             {/* Product grid */}
+//             {filtered.length === 0 ? (
+//               <div className="fade-up" style={{ textAlign: "center", padding: "80px 20px" }}>
+//                 <div style={{ width: 72, height: 72, borderRadius: 20, background: "linear-gradient(135deg,#f4f0e8,#eef5ec)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+//                   <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={30} style={{ color: "#9b9590" }} />
+//                 </div>
+//                 <div style={{ fontSize: 18, fontWeight: 700, color: "#1c2b22", marginBottom: 8 }}>No products found</div>
+//                 <div style={{ fontSize: 14, color: "#9b9590", marginBottom: 24 }}>Add your first crop to start selling</div>
+//                 <button onClick={() => { setShowAdd(true); setShowEdit(null); setForm(blankForm); setImageFile(null); setImgPreview(""); }} className="action-btn"
+//                   style={{ padding: "11px 24px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+//                   + Add Product
+//                 </button>
+//               </div>
+//             ) : (
+//               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 20 }}>
+//                 {filtered.map((p, i) => (
+//                   <div key={p._id} className="prod-card fade-up"
+//                     style={{ background: "#fff", borderRadius: 18, border: "1px solid #eeebe4", overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,.05)", transition: "all .22s", animationDelay: `${i * 0.04}s` }}>
+//                     {/* Image */}
+//                     <div style={{ height: 160, background: "linear-gradient(135deg,#e8f5e9,#f4f0e8)", position: "relative", overflow: "hidden" }}>
+//                       {p.imageUrl ? (
+//                         <img src={`http://localhost:5000${p.imageUrl}`} alt={p.cropName} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+//                       ) : (
+//                         <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+//                           <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={36} style={{ color: "#9b9590" }} />
+//                         </div>
+//                       )}
+//                       {/* Status dot */}
+//                       <div style={{ position: "absolute", top: 10, right: 10 }}>
+//                         <StatusBadge s={p.status} />
+//                       </div>
 //                     </div>
-//                     <div>
-//                       <div style={{ fontSize: "10px", color: "#b0ada8" }}>Stock</div>
-//                       <div style={{ fontSize: "14px", fontWeight: 700, color: p.stock === 0 ? "#ef4444" : "#1a3a2a" }}>
-//                         {p.stock}<span style={{ fontSize: "10px", fontWeight: 400, color: "#9b9b9b" }}>kg</span>
+//                     {/* Info */}
+//                     <div style={{ padding: "16px 18px" }}>
+//                       <div style={{ fontSize: 16, fontWeight: 700, color: "#1c2b22", marginBottom: 2 }}>{p.cropName}</div>
+//                       <div style={{ fontSize: 12, color: "#9b9590", marginBottom: 14 }}>{p.category}</div>
+//                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f9f7f4", borderRadius: 10, padding: "10px 14px", marginBottom: 14 }}>
+//                         <div>
+//                           <div style={{ fontSize: 10, fontWeight: 700, color: "#a09a90", textTransform: "uppercase", letterSpacing: ".06em" }}>Price</div>
+//                           <div style={{ fontSize: 17, fontWeight: 800, color: "#1a3a2a" }}>Rs.{p.price.toLocaleString()}<span style={{ fontSize: 11, fontWeight: 500, color: "#9b9590" }}>/{p.unit || "kg"}</span></div>
+//                         </div>
+//                         <div style={{ textAlign: "right" }}>
+//                           <div style={{ fontSize: 10, fontWeight: 700, color: "#a09a90", textTransform: "uppercase", letterSpacing: ".06em" }}>Stock</div>
+//                           <div style={{ fontSize: 17, fontWeight: 800, color: p.stock === 0 ? "#ef4444" : "#1a3a2a" }}>{p.stock}<span style={{ fontSize: 11, fontWeight: 500, color: "#9b9590" }}>{p.unit || "kg"}</span></div>
+//                         </div>
+//                       </div>
+//                       {p.createdAt && <div style={{ fontSize: 11, color: "#b0ada8", marginBottom: 14, display: "flex", alignItems: "center", gap: 5 }}>
+//                         <Icon d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" size={12} />
+//                         {new Date(p.createdAt).toLocaleDateString()}
+//                       </div>}
+//                       <div style={{ display: "flex", gap: 8 }}>
+//                         <button onClick={() => {
+//                             setShowEdit(p); setShowAdd(true);
+//                             setForm({ cropName: p.cropName, category: p.category, price: String(p.price), stock: String(p.stock), description: p.description || "", unit: p.unit || "kg" });
+//                             setImageFile(null);
+//                             setImgPreview(p.imageUrl ? `http://localhost:5000${p.imageUrl}` : "");
+//                             if (fileRef.current) fileRef.current.value = "";
+//                           }} className="action-btn"
+//                           style={{ flex: 1, padding: "8px", background: "#f4f0e8", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#1a3a2a", cursor: "pointer" }}>
+//                           Edit
+//                         </button>
+//                         <button onClick={() => handleDelete(p._id)} disabled={deleting === p._id} className="action-btn"
+//                           style={{ flex: 1, padding: "8px", background: "#fff0f0", border: "1px solid #fcd0d0", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#c0392b", cursor: "pointer" }}>
+//                           {deleting === p._id ? "…" : "Delete"}
+//                         </button>
 //                       </div>
 //                     </div>
 //                   </div>
+//                 ))}
+//               </div>
+//             )}
+//           </div>
+//         </main>
+//       </div>
 
-//                   {p.harvestDate && (
-//                     <div style={{ fontSize: "11px", color: "#9b9b9b", marginBottom: "10px" }}>
-//                       Harvest: {new Date(p.harvestDate).toLocaleDateString("en-CA")}
-//                     </div>
+//       {/* ══ ADD / EDIT MODAL ══ */}
+//       {showAdd && (
+//         <div onClick={e => { if (e.target === e.currentTarget) resetModal(); }}
+//           style={{ position: "fixed", inset: 0, background: "rgba(10,20,14,.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+//           <div className="slide-in" style={{ background: "#fff", borderRadius: 24, padding: "36px", width: "100%", maxWidth: 520, boxShadow: "0 32px 80px rgba(0,0,0,.25)", maxHeight: "90vh", overflowY: "auto" }}>
+//             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+//               <div>
+//                 <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1a3a2a", fontFamily: "'Playfair Display',serif" }}>{showEdit ? "Edit Product" : "Add New Product"}</h2>
+//                 <p style={{ fontSize: 13, color: "#9b9590", marginTop: 4 }}>{showEdit ? "Update your listing details" : "List a new crop for sale"}</p>
+//               </div>
+//               <button onClick={resetModal}
+//                 style={{ background: "#f4f0e8", border: "none", width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#6b8070" }}>
+//                 <Icon d="M6 18L18 6M6 6l12 12" size={16} />
+//               </button>
+//             </div>
+//             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+//               {[
+//                 { label: "Crop Name *", key: "cropName", placeholder: "e.g. Tomato, Carrot…", type: "text" },
+//                 { label: "Price (Rs.) *", key: "price", placeholder: "e.g. 450", type: "number" },
+//                 { label: "Stock *", key: "stock", placeholder: "e.g. 100", type: "number" },
+//                 { label: "Description", key: "description", placeholder: "Describe your crop…", type: "textarea" },
+//               ].map(f => (
+//                 <div key={f.key}>
+//                   <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>{f.label}</label>
+//                   {f.type === "textarea" ? (
+//                     <textarea value={(form as any)[f.key]} onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))} placeholder={f.placeholder} rows={3}
+//                       style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4", resize: "vertical" }} />
+//                   ) : (
+//                     <input type={f.type} value={(form as any)[f.key]} onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))} placeholder={f.placeholder}
+//                       style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4" }} />
 //                   )}
+//                 </div>
+//               ))}
+//               {/* Image upload */}
+//               <div>
+//                 <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>
+//                   Product Photo <span style={{ fontSize: 10, fontWeight: 500, color: "#b0ada8", textTransform: "none" }}>(optional)</span>
+//                 </label>
 
-//                   {p.trustScore > 0 && (
-//                     <div style={{ fontSize: "11px", color: "#6b8070", marginBottom: "10px" }}>
-//                       Trust Score: <span style={{ fontWeight: 700, color: "#2d5a3d" }}>{p.trustScore}%</span>
-//                     </div>
-//                   )}
-
-//                   {/* Footer */}
-//                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto" }}>
-//                     <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 10px", borderRadius: "100px",
-//                       ...statusStyle(p.status) }}>
-//                       {p.status}
-//                     </span>
-//                     <div style={{ display: "flex", gap: "6px" }}>
-//                       <button onClick={() => { setSelected(p); setModal("edit"); }}
-//                         style={{ height: "28px", padding: "0 10px", borderRadius: "7px",
-//                           border: "1px solid #e0ddd6", background: "white", cursor: "pointer",
-//                           fontSize: "11px", fontWeight: 600, color: "#1a3a2a" }}>
-//                         Edit
-//                       </button>
-//                       <button onClick={() => handleDelete(p._id)} disabled={deleting === p._id}
-//                         style={{ height: "28px", padding: "0 10px", borderRadius: "7px",
-//                           border: "1px solid #fcd0d0", background: "#fff5f5", cursor: "pointer",
-//                           fontSize: "11px", fontWeight: 600, color: "#c0392b",
-//                           opacity: deleting === p._id ? 0.5 : 1 }}>
-//                         Delete
-//                       </button>
+//                 {/* Preview */}
+//                 {imgPreview && (
+//                   <div style={{ position: "relative", marginBottom: 10, borderRadius: 12, overflow: "hidden", border: "1.5px solid #e0ddd6", height: 150 }}>
+//                     <img src={imgPreview} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+//                     <button
+//                       onClick={() => { setImageFile(null); setImgPreview(""); if (fileRef.current) fileRef.current.value = ""; }}
+//                       style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,.65)", border: "none", width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff" }}>
+//                       <Icon d="M6 18L18 6M6 6l12 12" size={13} />
+//                     </button>
+//                     <div style={{ position: "absolute", bottom: 8, left: 8, background: "rgba(0,0,0,.55)", borderRadius: 6, padding: "3px 8px", fontSize: 11, color: "#fff", fontWeight: 600 }}>
+//                       {imageFile ? imageFile.name : "Current photo"}
 //                     </div>
 //                   </div>
+//                 )}
+
+//                 {/* Drop zone */}
+//                 <div
+//                   onClick={() => fileRef.current?.click()}
+//                   style={{ border: "2px dashed #d0ddd6", borderRadius: 12, padding: "22px 16px", textAlign: "center", cursor: "pointer", background: "#fafaf8", transition: "all .2s" }}
+//                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#6aaa78"; e.currentTarget.style.background = "#f0faf2"; }}
+//                   onMouseLeave={e => { e.currentTarget.style.borderColor = "#d0ddd6"; e.currentTarget.style.background = "#fafaf8"; }}
+//                   onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = "#6aaa78"; e.currentTarget.style.background = "#f0faf2"; }}
+//                   onDragLeave={e => { e.currentTarget.style.borderColor = "#d0ddd6"; e.currentTarget.style.background = "#fafaf8"; }}
+//                   onDrop={e => {
+//                     e.preventDefault();
+//                     e.currentTarget.style.borderColor = "#d0ddd6";
+//                     e.currentTarget.style.background = "#fafaf8";
+//                     const file = e.dataTransfer.files[0];
+//                     if (file) handleFile(file);
+//                   }}>
+//                   <div style={{ width: 40, height: 40, borderRadius: 11, background: "#e8f5e9", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px" }}>
+//                     <Icon d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" size={20} style={{ color: "#6aaa78" }} />
+//                   </div>
+//                   <div style={{ fontSize: 14, fontWeight: 600, color: "#1c2b22", marginBottom: 3 }}>
+//                     {imgPreview ? "Replace Photo" : "Upload Crop Photo"}
+//                   </div>
+//                   <div style={{ fontSize: 12, color: "#9b9590" }}>Click or drag & drop · JPG, PNG, WebP · Max 5MB</div>
+//                 </div>
+
+//                 {/* Hidden file input */}
+//                 <input
+//                   ref={fileRef}
+//                   type="file"
+//                   accept="image/jpeg,image/png,image/webp"
+//                   style={{ display: "none" }}
+//                   onChange={e => { const file = e.target.files?.[0]; if (file) handleFile(file); }}
+//                 />
+//               </div>
+
+//               {/* Category + Unit row */}
+//               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+//                 <div>
+//                   <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>Category</label>
+//                   <select value={form.category} onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))}
+//                     style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4" }}>
+//                     {["Vegetables","Fruits","Grains","Herbs","Other"].map(c => <option key={c}>{c}</option>)}
+//                   </select>
+//                 </div>
+//                 <div>
+//                   <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>Unit</label>
+//                   <select value={form.unit} onChange={e => setForm(prev => ({ ...prev, unit: e.target.value }))}
+//                     style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4" }}>
+//                     {["kg","g","litre","bunch","piece"].map(u => <option key={u}>{u}</option>)}
+//                   </select>
 //                 </div>
 //               </div>
-//             ))}
+//               <button onClick={handleSave} disabled={saving || !form.cropName || !form.price || !form.stock} className="action-btn"
+//                 style={{ padding: "13px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", color: "#fff", border: "none", borderRadius: 11, fontSize: 15, fontWeight: 700, cursor: "pointer", opacity: saving ? 0.7 : 1, marginTop: 4 }}>
+//                 {saving ? "Saving…" : showEdit ? "Update Product" : "Add Product"}
+//               </button>
+//             </div>
 //           </div>
-//         )}
-//       </main>
-
-//       {/* Modal */}
-//       {(modal === "add" || modal === "edit") && (
-//         <ProductModal
-//           product={modal === "edit" ? selected : null}
-//           onClose={() => { setModal(null); setSelected(null); }}
-//           onSaved={fetchProducts}
-//         />
+//         </div>
 //       )}
-//     </div>
+
+//       {/* Toast */}
+//       {toast && (
+//         <div className="toast" style={{ position: "fixed", bottom: 28, right: 28, background: "#1a3a2a", color: "#fff", padding: "13px 22px", borderRadius: 12, fontSize: 14, fontWeight: 600, boxShadow: "0 8px 24px rgba(0,0,0,.2)", zIndex: 300 }}>
+//           {toast}
+//         </div>
+//       )}
+//     </>
 //   );
 // }
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import api, { productAPI } from "@/lib/axios-proxy";
+import { useRouter } from "next/navigation";
+import { productAPI, profileAPI } from "@/lib/axios-proxy";
+import api from "@/lib/axios-proxy";
 
-// ── Types ──────────────────────────────────────────────────
+interface User    { _id: string; name: string; email: string; role: string; }
+interface Profile { farmName: string; district: string; }
 interface Product {
-  _id: string; cropName: string; category: string; type: string;
-  price: number; stock: number; harvestDate?: string;
-  organicTreatmentHistory?: string; trustScore: number;
-  status: "Active" | "Out of Stock" | "Inactive";
-  imageUrl?: string;
+  _id: string; cropName: string; category: string; price: number;
+  stock: number; status: string; imageUrl?: string; createdAt?: string;
+  description?: string; unit?: string; type?: string; harvestDate?: string;
+  organicTreatmentHistory?: string;
 }
-
-const CATEGORIES = ["Leafy Green", "Root", "Fruit", "Grain", "Herb", "Other"];
-const TYPES      = ["Organic", "Conventional"];
 
 const NAV = [
-  { label: "Overview",    href: "/dashboard/farmer",              icon: "⌂" },
-  { label: "Crop Doctor", href: "/dashboard/farmer/crop-doctor",  icon: "✦" },
-  { label: "My Products", href: "/dashboard/farmer/products",     icon: "❧" },
-  { label: "Orders",      href: "/dashboard/farmer/orders",       icon: "◈" },
-  { label: "Weather",     href: "/dashboard/farmer/weather",      icon: "◎" },
-  { label: "Earnings",    href: "/dashboard/farmer/earnings",     icon: "◇" },
+  { label: "Overview",    href: "/dashboard/farmer",             icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
+  { label: "Crop Doctor", href: "/dashboard/farmer/crop-doctor", icon: "M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" },
+  { label: "My Products", href: "/dashboard/farmer/products",    icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
+  { label: "Orders",      href: "/dashboard/farmer/orders",      icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
+  { label: "Weather",     href: "/dashboard/farmer/weather",     icon: "M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" },
+  { label: "Earnings",    href: "/dashboard/farmer/earnings",    icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
 ];
 
-const labelStyle: React.CSSProperties = {
-  fontSize: "11px", fontWeight: 700, color: "#6b8070",
-  textTransform: "uppercase", letterSpacing: "0.06em",
-  display: "block", marginBottom: "5px",
-};
-const inputStyle: React.CSSProperties = {
-  width: "100%", padding: "10px 13px",
-  border: "1.5px solid #e0ddd6", borderRadius: "9px",
-  fontFamily: "'DM Sans',sans-serif", fontSize: "13px",
-  color: "#1a3a2a", background: "white", outline: "none",
-  boxSizing: "border-box",
-};
+const CATEGORIES = ["All", "Vegetable", "Leafy Green", "Root", "Fruit", "Grain", "Herb", "Other"];
+const FILTERS    = ["All", "Active", "Out of Stock", "Inactive"];
 
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
-}
+const Icon = ({ d, size = 18, style }: { d: string; size?: number; style?: React.CSSProperties }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d={d} />
+  </svg>
+);
 
-function getDateStr() {
-  return new Date().toLocaleDateString("en-US", {
-    weekday: "long", month: "long", day: "numeric",
-  });
-}
-
-async function saveProduct(
-  data: { cropName: string; category: string; type: string; price: string; stock: string; harvestDate: string; organicTreatmentHistory: string; imageFile: File | null },
-  productId?: string
-) {
-  const form = new FormData();
-  form.append("cropName", data.cropName);
-  form.append("category", data.category);
-  form.append("type",     data.type);
-  form.append("price",    data.price);
-  form.append("stock",    data.stock);
-  if (data.harvestDate)             form.append("harvestDate",             data.harvestDate);
-  if (data.organicTreatmentHistory) form.append("organicTreatmentHistory", data.organicTreatmentHistory);
-  if (data.imageFile)               form.append("image", data.imageFile);
-  const config = { headers: { "Content-Type": "multipart/form-data" } };
-  return productId
-    ? api.put(`/products/${productId}`, form, config)
-    : api.post("/products", form, config);
-}
-
-// ── Add / Edit Modal ───────────────────────────────────────
-function ProductModal({ product, onClose, onSaved }: { product: Product | null; onClose: () => void; onSaved: () => void }) {
-  const isEdit       = !!product;
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [form, setForm] = useState({
-    cropName:                product?.cropName                  || "",
-    category:                product?.category                  || "",
-    type:                    product?.type                      || "",
-    price:                   product?.price?.toString()         || "",
-    stock:                   product?.stock?.toString()         || "",
-    harvestDate:             product?.harvestDate?.slice(0, 10) || "",
-    organicTreatmentHistory: product?.organicTreatmentHistory   || "",
-  });
-  const [imageFile,    setImageFile]    = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>(
-    product?.imageUrl ? `http://localhost:5000${product.imageUrl}` : ""
-  );
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState("");
-
-  const set = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+const StatusBadge = ({ s }: { s: string }) => {
+  const map: Record<string, [string, string]> = {
+    Active:   ["#dcfce7","#16a34a"], active: ["#dcfce7","#16a34a"],
+    approved: ["#dcfce7","#16a34a"], Inactive: ["#fee2e2","#dc2626"],
+    "Out of Stock": ["#fef9c3","#a16207"],
   };
-
-  const handleSave = async () => {
-    if (!form.cropName || !form.category || !form.type || !form.price || !form.stock) {
-      setError("Please fill all required fields."); return;
-    }
-    setLoading(true); setError("");
-    try {
-      await saveProduct({ ...form, imageFile }, isEdit ? product!._id : undefined);
-      onSaved(); onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to save product.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  const [bg, col] = map[s] ?? ["#f3f4f6","#6b7280"];
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(15,36,24,.65)", zIndex: 200,
-      backdropFilter: "blur(6px)",
-      display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: "#f9f7f3", borderRadius: "20px", padding: "32px",
-        width: "100%", maxWidth: "580px", maxHeight: "90vh", overflowY: "auto",
-        boxShadow: "0 24px 60px rgba(0,0,0,.25)" }}>
-
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-          <div>
-            <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#1a3a2a", margin: 0 }}>
-              {isEdit ? "Edit Product" : "List New Product"}
-            </h2>
-            <p style={{ fontSize: "12px", color: "#9b9b9b", margin: "3px 0 0" }}>
-              {isEdit ? "Update your listing details" : "Add a crop to your marketplace"}
-            </p>
-          </div>
-          <button onClick={onClose} style={{
-            width: 34, height: 34, borderRadius: "50%",
-            background: "#f0ede8", border: "none", fontSize: "16px",
-            cursor: "pointer", color: "#6b8070", display: "flex", alignItems: "center", justifyContent: "center",
-          }}>✕</button>
-        </div>
-
-        {error && (
-          <div style={{ background: "#fff1f1", border: "1px solid #fcd0d0", borderRadius: "10px",
-            padding: "10px 14px", color: "#c0392b", fontSize: "13px", marginBottom: "16px" }}>
-            {error}
-          </div>
-        )}
-
-        {/* Image Upload */}
-        <div style={{ marginBottom: "20px" }}>
-          <label style={labelStyle}>Product Image (optional)</label>
-          <div onClick={() => fileInputRef.current?.click()} style={{
-            border: "2px dashed #c8e6c9", borderRadius: "14px",
-            cursor: "pointer", textAlign: "center", background: imagePreview ? "#f0fdf4" : "#fafaf8",
-            height: "130px", display: "flex", alignItems: "center", justifyContent: "center",
-            position: "relative", overflow: "hidden", transition: "all .2s",
-          }}>
-            {imagePreview ? (
-              <div style={{ position: "relative", width: "100%", height: "100%" }}>
-                <img src={imagePreview} alt="preview"
-                  style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "12px" }} />
-                <div style={{ position: "absolute", top: 8, right: 8, background: "#1a3a2a",
-                  color: "#fff", borderRadius: "7px", padding: "3px 10px", fontSize: "11px", fontWeight: 700 }}>
-                  Change
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div style={{ fontSize: "26px", marginBottom: "6px" }}>📷</div>
-                <div style={{ fontSize: "13px", color: "#6b8070", fontWeight: 600 }}>Click to upload image</div>
-                <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "2px" }}>JPG, PNG or WebP · Max 5MB</div>
-              </div>
-            )}
-          </div>
-          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
-            onChange={handleImageChange} style={{ display: "none" }} />
-          {imageFile && (
-            <div style={{ fontSize: "11px", color: "#6b8070", marginTop: "5px", display: "flex", alignItems: "center", gap: 6 }}>
-              {imageFile.name} ({(imageFile.size / 1024).toFixed(0)} KB)
-              <button onClick={() => { setImageFile(null); setImagePreview(product?.imageUrl ? `http://localhost:5000${product.imageUrl}` : ""); }}
-                style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "11px" }}>
-                Remove
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
-          <div>
-            <label style={labelStyle}>Crop Name *</label>
-            <input type="text" placeholder="e.g. Organic Spinach"
-              value={form.cropName} onChange={e => set("cropName", e.target.value)} style={inputStyle} />
-          </div>
-          <div>
-            <label style={labelStyle}>Category *</label>
-            <select value={form.category} onChange={e => set("category", e.target.value)} style={inputStyle}>
-              <option value="">Select</option>
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={labelStyle}>Price (Rs/kg) *</label>
-            <input type="number" placeholder="150" min="1"
-              value={form.price} onChange={e => set("price", e.target.value)} style={inputStyle} />
-          </div>
-          <div>
-            <label style={labelStyle}>Stock (kg) *</label>
-            <input type="number" placeholder="25" min="0"
-              value={form.stock} onChange={e => set("stock", e.target.value)} style={inputStyle} />
-          </div>
-          <div>
-            <label style={labelStyle}>Harvest Date</label>
-            <input type="date" value={form.harvestDate}
-              onChange={e => set("harvestDate", e.target.value)} style={inputStyle} />
-          </div>
-          <div>
-            <label style={labelStyle}>Type *</label>
-            <select value={form.type} onChange={e => set("type", e.target.value)} style={inputStyle}>
-              <option value="">Select</option>
-              {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-        </div>
-
-        <div style={{ marginBottom: "24px" }}>
-          <label style={labelStyle}>Organic Treatment History (optional)</label>
-          <textarea placeholder="Describe treatments used..."
-            value={form.organicTreatmentHistory}
-            onChange={e => set("organicTreatmentHistory", e.target.value)}
-            rows={3} style={{ ...inputStyle, resize: "vertical", height: "auto" }} />
-        </div>
-
-        <button onClick={handleSave} disabled={loading} style={{
-          width: "100%", padding: "13px",
-          background: loading ? "#a8d5b5" : "linear-gradient(135deg,#1a3a2a,#2d5a3d)",
-          color: "white", border: "none", borderRadius: "10px",
-          fontFamily: "'DM Sans',sans-serif", fontSize: "14px", fontWeight: 700,
-          cursor: loading ? "not-allowed" : "pointer",
-          letterSpacing: "0.02em",
-        }}>
-          {loading ? "Saving…" : isEdit ? "Save Changes" : "List Product"}
-        </button>
-      </div>
-    </div>
+    <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 99, background: bg, color: col }}>
+      {s === "approved" ? "Active" : s}
+    </span>
   );
-}
+};
 
-// ── Main Page ──────────────────────────────────────────────
-export default function MyProductsPage() {
-  const router   = useRouter();
-  const pathname = usePathname();
+export default function ProductsPage() {
+  const router = useRouter();
 
-  const [user,        setUser]        = useState<{ name: string } | null>(null);
-  const [products,    setProducts]    = useState<Product[]>([]);
-  const [loading,     setLoading]     = useState(true);
-  const [search,      setSearch]      = useState("");
-  const [filterType,  setFilterType]  = useState<string>("All");
-  const [modal,       setModal]       = useState<"add" | "edit" | null>(null);
-  const [selected,    setSelected]    = useState<Product | null>(null);
-  const [deleting,    setDeleting]    = useState<string | null>(null);
-  const [error,       setError]       = useState("");
+  const [user,          setUser]          = useState<User | null>(null);
+  const [profile,       setProfile]       = useState<Profile | null>(null);
+  const [sub,           setSub]           = useState<any>(null);
+  const [products,      setProducts]      = useState<Product[]>([]);
+  const [loading,       setLoading]       = useState(true);
+  const [sideCollapsed, setSideCollapsed] = useState(false);
+  const [search,        setSearch]        = useState("");
+  const [filter,        setFilter]        = useState("All");
+  const [catFilter,     setCatFilter]     = useState("All");
+  const [showAdd,       setShowAdd]       = useState(false);
+  const [showEdit,      setShowEdit]      = useState<Product | null>(null);
+  const [saving,        setSaving]        = useState(false);
+  const [deleting,      setDeleting]      = useState<string | null>(null);
+  const [toast,         setToast]         = useState("");
+
+  const blankForm = { cropName: "", category: "Vegetable", price: "", stock: "", description: "", unit: "kg", type: "Organic", harvestDate: new Date().toISOString().split("T")[0] };
+  const [form,      setForm]      = useState(blankForm);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imgPreview,setImgPreview]= useState<string>("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const SBW = sideCollapsed ? 68 : 220;
+
+  const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; };
+  const getInitial = () => (user?.name || "F")[0].toUpperCase();
 
   useEffect(() => {
     const stored = localStorage.getItem("agriai_user");
     const token  = localStorage.getItem("agriai_token");
     if (!stored || !token) { router.push("/"); return; }
     const u = JSON.parse(stored);
-    if (u.role !== "farmer" && u.role !== "admin") { router.push("/"); return; }
     setUser(u);
-    fetchProducts();
+    loadData(u);
   }, []);
 
-  const fetchProducts = async () => {
-    setLoading(true); setError("");
+  const loadData = async (u: User) => {
     try {
-      const { data } = await productAPI.getMyProducts();
-      setProducts(Array.isArray(data) ? data : data.products || []);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load products.");
-    } finally {
-      setLoading(false);
+      const [profR, prodR, subR] = await Promise.allSettled([
+        profileAPI.getMe(),
+        productAPI.getMyProducts(),
+        api.get("/subscriptions/my"),
+      ]);
+      if (profR.status === "fulfilled") setProfile({ farmName: profR.value.data.farmName || "", district: profR.value.data.district || "" });
+      if (prodR.status === "fulfilled") {
+        const raw = prodR.value.data?.products || prodR.value.data || [];
+        setProducts(Array.isArray(raw) ? raw : []);
+      }
+      if (subR.status === "fulfilled") setSub(subR.value.data);
+    } catch { }
+    setLoading(false);
+  };
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 3000); };
+
+  const resetModal = () => {
+    setShowAdd(false); setShowEdit(null);
+    setForm(blankForm); setImageFile(null); setImgPreview("");
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const handleFile = (file: File) => {
+    if (file.size > 5 * 1024 * 1024) { showToast("File too large. Max 5MB."); return; }
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = e => setImgPreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async () => {
+    if (!form.cropName.trim()) { showToast("Please enter a crop name."); return; }
+    if (!form.price || Number(form.price) <= 0) { showToast("Please enter a valid price."); return; }
+    if (!form.stock || Number(form.stock) < 0) { showToast("Please enter a valid stock amount."); return; }
+    if (!form.harvestDate) { showToast("Please select a harvest date."); return; }
+    setSaving(true);
+    try {
+      if (imageFile) {
+        // Use FormData when an image file is selected
+        const fd = new FormData();
+        fd.append("cropName",    form.cropName.trim());
+        fd.append("category",    form.category);
+        fd.append("type",        form.type);
+        fd.append("price",       String(Number(form.price)));
+        fd.append("stock",       String(Number(form.stock)));
+        fd.append("harvestDate", form.harvestDate);
+        fd.append("description", form.description.trim());
+        fd.append("unit",        form.unit);
+        fd.append("image",       imageFile);
+        if (showEdit) {
+          const { data } = await api.put(`/products/${showEdit._id}`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+          setProducts(prev => prev.map(p => p._id === showEdit._id ? { ...p, ...(data.product || data) } : p));
+          showToast("Product updated!");
+        } else {
+          const { data } = await api.post("/products", fd, { headers: { "Content-Type": "multipart/form-data" } });
+          setProducts(prev => [...prev, data.product || data]);
+          showToast("Product added!");
+        }
+      } else {
+        // Use JSON when no new image file
+        const payload = {
+          cropName:    form.cropName.trim(),
+          category:    form.category,
+          type:        form.type,
+          price:       Number(form.price),
+          stock:       Number(form.stock),
+          harvestDate: form.harvestDate,
+          description: form.description.trim(),
+          unit:        form.unit,
+        };
+        if (showEdit) {
+          const { data } = await productAPI.update(showEdit._id, payload);
+          setProducts(prev => prev.map(p => p._id === showEdit._id ? { ...p, ...(data.product || data) } : p));
+          showToast("Product updated!");
+        } else {
+          const { data } = await productAPI.create(payload);
+          setProducts(prev => [...prev, data.product || data]);
+          showToast("Product added!");
+        }
+      }
+      resetModal();
+    } catch (e: any) {
+      showToast(e.response?.data?.message || e.response?.data?.error || "Error saving product. Please try again.");
     }
+    setSaving(false);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this product? This cannot be undone.")) return;
     setDeleting(id);
     try {
       await productAPI.remove(id);
       setProducts(prev => prev.filter(p => p._id !== id));
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Delete failed.");
-    } finally {
-      setDeleting(null);
-    }
+      showToast("Product deleted.");
+    } catch { showToast("Failed to delete."); }
+    setDeleting(null);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("agriai_token");
-    localStorage.removeItem("agriai_user");
-    router.push("/");
-  };
+  const handleLogout = () => { localStorage.removeItem("agriai_token"); localStorage.removeItem("agriai_user"); router.push("/"); };
 
-  const filtered = products
-    .filter(p => p.cropName.toLowerCase().includes(search.toLowerCase()))
-    .filter(p => filterType === "All" || p.type === filterType || p.status === filterType);
-
-  const getInitial = () => (user?.name || "F")[0].toUpperCase();
-
-  const activeCount   = products.filter(p => p.status === "Active").length;
-  const outOfStock    = products.filter(p => p.status === "Out of Stock").length;
-  const totalValue    = products.reduce((sum, p) => sum + p.price * p.stock, 0);
-
-  const statusStyle = (s: string) => ({
-    background: s === "Active" ? "#e8f5e9" : s === "Out of Stock" ? "#f4f0e8" : "#fce4ec",
-    color:      s === "Active" ? "#2d6a35" : s === "Out of Stock" ? "#6b8070" : "#c62828",
-    border:     `1px solid ${s === "Active" ? "#c8e6c9" : s === "Out of Stock" ? "#e0ddd6" : "#f48fb1"}`,
+  const filtered = products.filter(p => {
+    const matchSearch = p.cropName.toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filter === "All" || (filter === "Active" && (p.status === "Active" || p.status === "approved")) || (filter === "Out of Stock" && p.stock === 0) || p.status === filter;
+    const matchCat    = catFilter === "All" || p.category === catFilter;
+    return matchSearch && matchFilter && matchCat;
   });
 
-  const FILTER_TABS = ["All", "Active", "Out of Stock", "Organic", "Conventional"];
+  const totalProducts   = products.length;
+  const activeListings  = products.filter(p => p.status === "Active" || p.status === "approved").length;
+  const outOfStock      = products.filter(p => p.stock === 0).length;
+  const inventoryValue  = products.reduce((a, p) => a + p.price * p.stock, 0);
+
+  if (loading) return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f4f0e8", fontFamily: "'DM Sans',sans-serif" }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#1a3a2a,#6aaa78)", margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={22} style={{ color: "#fff" }} />
+        </div>
+        <div style={{ color: "#2d5a3d", fontWeight: 700, fontSize: 15 }}>Loading products…</div>
+      </div>
+    </div>
+  );
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'DM Sans',sans-serif", background: "#f4f0e8" }}>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:'DM Sans',sans-serif;background:#f2efe8;}
+        ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:#d0cdc6;border-radius:10px;}
+        .nav-btn:hover{background:rgba(106,170,120,.15)!important;color:#fff!important;}
+        .action-btn:hover{opacity:.88;}
+        .prod-card:hover{box-shadow:0 12px 36px rgba(26,58,42,.13)!important;transform:translateY(-3px);}
+        .filter-chip:hover{background:#e8f5e9!important;color:#1a3a2a!important;}
+        input:focus,textarea:focus,select:focus{outline:none;border-color:#6aaa78!important;box-shadow:0 0 0 3px rgba(106,170,120,.15);}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+        .fade-up{animation:fadeUp .32s ease both;}
+        @keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+        .slide-in{animation:slideIn .28s ease both;}
+        @keyframes toastIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+        .toast{animation:toastIn .25s ease both;}
+      `}</style>
 
-      {/* ══ SIDEBAR ══ */}
-      <aside style={{
-        width: 200, background: "linear-gradient(180deg,#1a3a2a 0%,#0f2418 100%)",
-        display: "flex", flexDirection: "column",
-        position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 50,
-      }}>
-        {/* Logo */}
-        <div style={{ padding: "24px 22px 18px", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
-          <div style={{ fontFamily: "'Playfair Display',serif", fontWeight: 900, fontSize: 24, color: "#fff" }}>
-            Ag<span style={{ color: "#6aaa78" }}>real</span>
-          </div>
-        </div>
+      <div style={{ display: "flex", minHeight: "100vh", background: "#f2efe8" }}>
 
-        {/* User */}
-        <div style={{ padding: "16px 22px", borderBottom: "1px solid rgba(255,255,255,.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{
-              width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6aaa78,#2d5a3d)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 15, fontWeight: 700, color: "#fff",
-              boxShadow: "0 2px 8px rgba(106,170,120,.4)",
-            }}>
-              {getInitial()}
-            </div>
-            <div>
-              <div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{user?.name || "Farmer"}</div>
-              <div style={{ color: "rgba(255,255,255,.4)", fontSize: 11 }}>My Farm</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Nav label */}
-        <div style={{ padding: "16px 22px 6px", fontSize: "10px", fontWeight: 700,
-          color: "rgba(255,255,255,.25)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-          Navigation
-        </div>
-
-        {/* Nav items */}
-        <nav style={{ flex: 1, padding: "4px 10px", overflowY: "auto" }}>
-          {NAV.map(item => {
-            const isActive = pathname === item.href;
-            return (
-              <button key={item.href} onClick={() => router.push(item.href)} style={{
-                width: "100%", display: "flex", alignItems: "center", gap: 10,
-                padding: "9px 12px", border: "none", borderRadius: "10px",
-                marginBottom: "2px",
-                background: isActive ? "rgba(106,170,120,.18)" : "transparent",
-                color: isActive ? "#fff" : "rgba(255,255,255,.5)",
-                fontSize: 13, fontWeight: isActive ? 600 : 400,
-                cursor: "pointer", transition: "all .18s", textAlign: "left",
-                position: "relative",
-              }}>
-                {isActive && (
-                  <div style={{
-                    position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)",
-                    width: 3, height: 20, background: "#6aaa78", borderRadius: "0 3px 3px 0",
-                  }} />
-                )}
-                <span style={{ fontSize: "15px", opacity: isActive ? 1 : 0.6 }}>{item.icon}</span>
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Settings & Logout */}
-        <div style={{ padding: "10px", borderTop: "1px solid rgba(255,255,255,.08)" }}>
-          <button onClick={handleLogout} style={{
-            width: "100%", display: "flex", alignItems: "center", gap: 10,
-            padding: "9px 12px", border: "none", background: "transparent",
-            color: "#ef4444", fontSize: 13, cursor: "pointer", fontWeight: 600,
-            borderRadius: "10px",
-          }}>
-            <span>⎋</span> Sign Out
-          </button>
-        </div>
-      </aside>
-
-      {/* ══ MAIN ══ */}
-      <main style={{ marginLeft: 200, flex: 1, display: "flex", flexDirection: "column" }}>
-
-        {/* ── TOP NAVBAR (like Overview) ── */}
-        <div style={{
-          position: "sticky", top: 0, zIndex: 40,
-          background: "rgba(244,240,232,.92)", backdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(0,0,0,.06)",
-          padding: "0 32px",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          height: "64px",
+        {/* ══ SIDEBAR ══ */}
+        <aside style={{
+          width: SBW, background: "linear-gradient(185deg,#1a3a2a 0%,#122a1c 60%,#0a1e11 100%)",
+          display: "flex", flexDirection: "column", position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 60,
+          transition: "width .28s cubic-bezier(.4,0,.2,1)", overflow: "hidden",
+          boxShadow: "4px 0 24px rgba(0,0,0,.18)",
         }}>
-          {/* Left: greeting */}
-          <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-              <span style={{ fontSize: "18px", fontWeight: 400, color: "#4a6358" }}>{getGreeting()},</span>
-              <span style={{ fontSize: "18px", fontWeight: 700, color: "#1a3a2a" }}>{user?.name || "Farmer"}</span>
-            </div>
-            <div style={{ fontSize: "12px", color: "#9b9b9b", marginTop: "1px" }}>
-              {getDateStr()} · My Products
-            </div>
-          </div>
-
-          {/* Right: actions */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            {/* Search bar */}
-            <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)",
-                fontSize: "13px", color: "#9b9b9b" }}>🔍</span>
-              <input type="text" placeholder="Search crops…"
-                value={search} onChange={e => setSearch(e.target.value)}
-                style={{
-                  padding: "8px 14px 8px 34px", border: "1.5px solid #e0ddd6",
-                  borderRadius: "100px", fontFamily: "'DM Sans',sans-serif", fontSize: "13px",
-                  background: "white", outline: "none", width: "200px", color: "#1a3a2a",
-                }} />
-            </div>
-
-            {/* Add Product button */}
-            <button onClick={() => { setSelected(null); setModal("add"); }} style={{
-              padding: "9px 18px",
-              background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)",
-              color: "white", border: "none", borderRadius: "100px",
-              fontFamily: "'DM Sans',sans-serif", fontSize: "13px", fontWeight: 600,
-              cursor: "pointer", display: "flex", alignItems: "center", gap: "6px",
-              boxShadow: "0 2px 10px rgba(26,58,42,.25)",
-            }}>
-              <span style={{ fontSize: "16px", lineHeight: 1 }}>+</span> Add Product
-            </button>
-
-            {/* Avatar */}
-            <div style={{
-              width: 36, height: 36, borderRadius: "50%",
-              background: "linear-gradient(135deg,#6aaa78,#2d5a3d)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "14px", fontWeight: 700, color: "#fff",
-              cursor: "pointer", boxShadow: "0 2px 8px rgba(106,170,120,.35)",
-            }}>
-              {getInitial()}
-            </div>
-          </div>
-        </div>
-
-        {/* ── PAGE BODY ── */}
-        <div style={{ padding: "28px 32px", flex: 1 }}>
-
-          {/* ── Stats strip ── */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "14px", marginBottom: "26px" }}>
-            {[
-              { label: "Total Products", value: products.length, sub: "Listed crops", dot: "#6aaa78" },
-              { label: "Active Listings", value: activeCount, sub: "Selling now", dot: "#2d6a35" },
-              { label: "Out of Stock",   value: outOfStock,  sub: "Need restocking", dot: "#e0a800" },
-              { label: "Inventory Value", value: `Rs.${(totalValue/1000).toFixed(1)}K`, sub: "Est. total value", dot: "#6b8070" },
-            ].map(stat => (
-              <div key={stat.label} style={{
-                background: "white", borderRadius: "14px", padding: "16px 18px",
-                border: "1px solid #e8e4dc", boxShadow: "0 1px 4px rgba(0,0,0,.04)",
-                display: "flex", flexDirection: "column", gap: "4px",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: "4px" }}>
-                  <div style={{ width: 7, height: 7, borderRadius: "50%", background: stat.dot }} />
-                  <span style={{ fontSize: "11px", color: "#9b9b9b", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                    {stat.label}
-                  </span>
-                </div>
-                <div style={{ fontSize: "22px", fontWeight: 800, color: "#1a3a2a", lineHeight: 1.1 }}>{stat.value}</div>
-                <div style={{ fontSize: "11px", color: "#b0ada8" }}>{stat.sub}</div>
+          {/* Logo */}
+          <div style={{ padding: sideCollapsed ? "18px 0" : "20px 20px 16px", borderBottom: "1px solid rgba(255,255,255,.07)", display: "flex", alignItems: "center", justifyContent: sideCollapsed ? "center" : "space-between" }}>
+            {!sideCollapsed && (
+              <div onClick={() => router.push("/")} style={{ fontFamily: "'Playfair Display',serif", fontWeight: 900, fontSize: 22, color: "#fff", cursor: "pointer", letterSpacing: "-0.5px" }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = "0.75")} onMouseLeave={e => (e.currentTarget.style.opacity = "1")}>
+                Ag<span style={{ color: "#6aaa78" }}>real</span>
               </div>
-            ))}
+            )}
+            <button onClick={() => setSideCollapsed(p => !p)} className="action-btn"
+              style={{ background: "rgba(255,255,255,.07)", border: "none", borderRadius: 8, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,.5)", flexShrink: 0 }}>
+              <Icon d={sideCollapsed ? "M13 5l7 7-7 7M5 5l7 7-7 7" : "M11 19l-7-7 7-7m8 14l-7-7 7-7"} size={14} />
+            </button>
           </div>
+          {/* User card */}
+          <div style={{ padding: sideCollapsed ? "14px 0" : "14px 16px", borderBottom: "1px solid rgba(255,255,255,.07)", display: sideCollapsed ? "flex" : "block", justifyContent: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: sideCollapsed ? "center" : "flex-start" }}>
+              <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6aaa78,#2d5a3d)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#fff", border: "2px solid rgba(255,255,255,.15)", flexShrink: 0 }}>
+                {getInitial()}
+              </div>
+              {!sideCollapsed && (
+                <div>
+                  <div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{user?.name || "Farmer"}</div>
+                  <div style={{ color: "rgba(255,255,255,.4)", fontSize: 10 }}>{profile?.farmName || "My Farm"}</div>
+                  {sub?.isActive && (
+                    <div style={{ marginTop: 4, display: "inline-flex", alignItems: "center", gap: 3, background: "rgba(106,170,120,.25)", borderRadius: 99, padding: "1px 8px", fontSize: 9, color: "#6aaa78", fontWeight: 700 }}>
+                      <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#6aaa78", display: "inline-block" }} />
+                      {sub.status === "trialing" ? "Free Trial" : "Active"}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Nav */}
+          <nav style={{ flex: 1, padding: "10px 0", overflowY: "auto" }}>
+            {!sideCollapsed && <div style={{ padding: "10px 16px 4px", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.25)", textTransform: "uppercase", letterSpacing: ".1em" }}>Navigation</div>}
+            {NAV.map(item => {
+              const active = item.href === "/dashboard/farmer/products";
+              return (
+                <button key={item.href} onClick={() => router.push(item.href)} className="nav-btn"
+                  title={sideCollapsed ? item.label : undefined}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: sideCollapsed ? "12px 0" : "9px 16px", justifyContent: sideCollapsed ? "center" : "flex-start", border: "none", background: active ? "rgba(106,170,120,.18)" : "transparent", borderLeft: active ? "3px solid #6aaa78" : "3px solid transparent", color: active ? "#fff" : "rgba(255,255,255,.5)", fontSize: 13, fontWeight: active ? 600 : 400, cursor: "pointer", transition: "all .18s", textAlign: "left" }}>
+                  <Icon d={item.icon} size={17} style={{ flexShrink: 0 }} />
+                  {!sideCollapsed && <span>{item.label}</span>}
+                  {!sideCollapsed && active && <div style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: "50%", background: "#6aaa78" }} />}
+                </button>
+              );
+            })}
+          </nav>
+          {/* Bottom */}
+          <div style={{ padding: "10px 0", borderTop: "1px solid rgba(255,255,255,.07)" }}>
+            <button onClick={() => router.push("/dashboard/farmer/settings")} className="nav-btn" title={sideCollapsed ? "Settings" : undefined}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, justifyContent: sideCollapsed ? "center" : "flex-start", padding: sideCollapsed ? "11px 0" : "9px 16px", border: "none", background: "transparent", color: "rgba(255,255,255,.4)", fontSize: 13, cursor: "pointer", transition: "all .18s" }}>
+              <Icon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" size={16} style={{ flexShrink: 0 }} />
+              {!sideCollapsed && <span>Settings</span>}
+            </button>
+            <button onClick={handleLogout} className="nav-btn" title={sideCollapsed ? "Sign Out" : undefined}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, justifyContent: sideCollapsed ? "center" : "flex-start", padding: sideCollapsed ? "11px 0" : "9px 16px", border: "none", background: "transparent", color: "#f87171", fontSize: 13, cursor: "pointer", fontWeight: 600, transition: "all .18s" }}>
+              <Icon d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" size={16} style={{ flexShrink: 0 }} />
+              {!sideCollapsed && <span>Sign Out</span>}
+            </button>
+          </div>
+        </aside>
 
-          {/* ── Filter tabs ── */}
-          <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
-            {FILTER_TABS.map(tab => (
-              <button key={tab} onClick={() => setFilterType(tab)} style={{
-                padding: "6px 16px", borderRadius: "100px", fontSize: "12px", fontWeight: 600,
-                border: filterType === tab ? "none" : "1.5px solid #e0ddd6",
-                background: filterType === tab ? "#1a3a2a" : "white",
-                color: filterType === tab ? "white" : "#6b8070",
-                cursor: "pointer", transition: "all .15s",
-              }}>
-                {tab}
+        {/* ══ MAIN ══ */}
+        <main style={{ marginLeft: SBW, flex: 1, display: "flex", flexDirection: "column", transition: "margin-left .28s cubic-bezier(.4,0,.2,1)", minHeight: "100vh" }}>
+
+          {/* Topbar */}
+          <header style={{ background: "rgba(255,255,255,.92)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(0,0,0,.07)", padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 40 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <button onClick={() => router.back()} className="action-btn"
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, background: "#f4f0e8", border: "1px solid #e0ddd6", cursor: "pointer", flexShrink: 0 }}>
+                <Icon d="M15 19l-7-7 7-7" size={16} style={{ color: "#1a3a2a" }} />
               </button>
-            ))}
-            <div style={{ marginLeft: "auto", fontSize: "12px", color: "#9b9b9b", display: "flex", alignItems: "center" }}>
-              {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+              <div>
+                <div style={{ fontSize: 19, fontWeight: 700, color: "#1c2b22", letterSpacing: "-.3px" }}>
+                  {greeting()}, <span style={{ color: "#2d5a3d" }}>{user?.name?.split(" ")[0]}</span>
+                </div>
+                <div style={{ fontSize: 12, color: "#9b9590", marginTop: 2 }}>
+                  {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                  {profile?.district ? ` · ${profile.district}` : ""}
+                </div>
+              </div>
             </div>
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div style={{ background: "#fff1f1", border: "1px solid #fcd0d0", borderRadius: "10px",
-              padding: "12px 16px", color: "#c0392b", fontSize: "13px", marginBottom: "18px",
-              display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span>{error}</span>
-              <button onClick={fetchProducts} style={{ background: "#1a3a2a", color: "#fff",
-                border: "none", borderRadius: "7px", padding: "5px 12px", fontSize: "12px",
-                fontWeight: 600, cursor: "pointer" }}>Retry</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {/* Search */}
+              <div style={{ position: "relative" }}>
+                <Icon d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" size={15} style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "#9b9590" }} />
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search crops…"
+                  style={{ paddingLeft: 34, paddingRight: 14, height: 36, border: "1px solid #e0ddd6", borderRadius: 9, background: "#f9f7f4", fontSize: 13, color: "#1a3a2a", width: 200, fontFamily: "'DM Sans',sans-serif" }} />
+              </div>
+              {/* Add Product */}
+              <button onClick={() => { setShowAdd(true); setShowEdit(null); setForm(blankForm); setImageFile(null); setImgPreview(""); if (fileRef.current) fileRef.current.value = ""; }} className="action-btn"
+                style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 4px 14px rgba(26,58,42,.25)" }}>
+                <Icon d="M12 4v16m8-8H4" size={15} />
+                Add Product
+              </button>
+              {/* Avatar */}
+              <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6aaa78,#2d5a3d)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 15, border: "2px solid rgba(255,255,255,.8)", boxShadow: "0 2px 8px rgba(45,90,61,.3)", cursor: "pointer" }}>
+                {getInitial()}
+              </div>
             </div>
-          )}
+          </header>
 
-          {/* ── Grid ── */}
-          {loading ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(230px,1fr))", gap: "16px" }}>
-              {[1,2,3,4].map(i => (
-                <div key={i} style={{ background: "white", borderRadius: "16px", height: "300px",
-                  border: "1px solid #e8e4dc", overflow: "hidden" }}>
-                  <div style={{ height: "165px", background: "linear-gradient(90deg,#f0ede8 25%,#e8e4dc 50%,#f0ede8 75%)",
-                    backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite" }} />
-                  <div style={{ padding: "14px" }}>
-                    {[80,50,60].map((w,j) => (
-                      <div key={j} style={{ height: "12px", borderRadius: "6px", marginBottom: "10px",
-                        background: "#f0ede8", width: `${w}%` }} />
-                    ))}
+          {/* Body */}
+          <div style={{ padding: "28px 32px", flex: 1 }}>
+
+            {/* Stat cards */}
+            <div className="fade-up" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 28 }}>
+              {[
+                { label: "Total Products", value: totalProducts, sub: "Listed crops", dot: "#6aaa78" },
+                { label: "Active Listings", value: activeListings, sub: "Selling now", dot: "#6aaa78" },
+                { label: "Out of Stock",    value: outOfStock,    sub: "Need restocking", dot: "#f59e0b" },
+                { label: "Inventory Value", value: `Rs.${(inventoryValue/1000).toFixed(1)}K`, sub: "Est. total value", dot: "#3b82f6" },
+              ].map(s => (
+                <div key={s.label} style={{ background: "#fff", borderRadius: 16, padding: "20px 22px", border: "1px solid #eeebe4", boxShadow: "0 2px 8px rgba(0,0,0,.04)", position: "relative" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: s.dot }} />
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#a09a90", textTransform: "uppercase", letterSpacing: ".07em" }}>{s.label}</div>
                   </div>
+                  <div style={{ fontSize: 32, fontWeight: 800, color: "#1c2b22", fontFamily: "'Playfair Display',serif", lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
+                  <div style={{ fontSize: 12, color: "#9b9590" }}>{s.sub}</div>
                 </div>
               ))}
             </div>
-          ) : filtered.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "80px 20px" }}>
-              <div style={{ fontSize: "40px", marginBottom: "12px" }}>🌱</div>
-              <div style={{ fontSize: "15px", color: "#6b8070", fontWeight: 600, marginBottom: "6px" }}>
-                {search ? `No products match "${search}"` : "No products yet"}
-              </div>
-              <div style={{ fontSize: "13px", color: "#b0ada8", marginBottom: "20px" }}>
-                {!search && "Start by listing your first crop on the marketplace"}
-              </div>
-              {!search && (
-                <button onClick={() => { setSelected(null); setModal("add"); }} style={{
-                  padding: "10px 22px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)",
-                  color: "white", border: "none", borderRadius: "100px", fontSize: "13px",
-                  fontWeight: 600, cursor: "pointer",
-                }}>+ Add Your First Product</button>
-              )}
-            </div>
-          ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(230px,1fr))", gap: "16px" }}>
-              {filtered.map(p => (
-                <div key={p._id} style={{
-                  background: "white", borderRadius: "16px",
-                  border: "1px solid #e8e4dc", overflow: "hidden",
-                  boxShadow: "0 1px 6px rgba(0,0,0,.05)",
-                  display: "flex", flexDirection: "column",
-                  transition: "box-shadow .2s, transform .2s",
-                }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 24px rgba(0,0,0,.1)";
-                    (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)";
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLDivElement).style.boxShadow = "0 1px 6px rgba(0,0,0,.05)";
-                    (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
-                  }}
-                >
-                  {/* Image */}
-                  <div style={{ height: "165px", background: "#f0fdf4", position: "relative",
-                    flexShrink: 0, overflow: "hidden" }}>
-                    {p.imageUrl ? (
-                      <img src={`http://localhost:5000${p.imageUrl}`} alt={p.cropName}
-                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block",
-                          transition: "transform .3s" }}
-                        onMouseEnter={e => (e.target as HTMLImageElement).style.transform = "scale(1.04)"}
-                        onMouseLeave={e => (e.target as HTMLImageElement).style.transform = "scale(1)"}
-                        onError={e => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                          (e.target as HTMLImageElement).parentElement!.style.background = "#f4f0e8";
-                        }} />
-                    ) : (
-                      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column",
-                        alignItems: "center", justifyContent: "center", background: "#f0fdf4", gap: "6px" }}>
-                        <span style={{ fontSize: "28px" }}>🌿</span>
-                        <span style={{ fontSize: "11px", color: "#9ca3af", fontWeight: 500 }}>No image</span>
-                      </div>
-                    )}
 
-                    {/* Badges */}
-                    <div style={{ position: "absolute", top: "10px", right: "10px", display: "flex", gap: "5px" }}>
-                      {p.type === "Organic" && (
-                        <div style={{ background: "#e8f5e9", color: "#2d6a35", fontSize: "10px",
-                          fontWeight: 700, padding: "3px 9px", borderRadius: "100px",
-                          border: "1px solid #c8e6c9", backdropFilter: "blur(4px)" }}>
-                          Organic
+            {/* Filters row */}
+            <div className="fade-up" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {FILTERS.map(f => (
+                  <button key={f} onClick={() => setFilter(f)} className="filter-chip"
+                    style={{ padding: "7px 16px", borderRadius: 99, border: "1.5px solid", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all .18s", background: filter === f ? "#1a3a2a" : "#fff", color: filter === f ? "#fff" : "#6b8070", borderColor: filter === f ? "#1a3a2a" : "#e0ddd6" }}>
+                    {f}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: 13, color: "#9b9590", fontWeight: 500 }}>{filtered.length} result{filtered.length !== 1 ? "s" : ""}</div>
+            </div>
+
+            {/* Product grid */}
+            {filtered.length === 0 ? (
+              <div className="fade-up" style={{ textAlign: "center", padding: "80px 20px" }}>
+                <div style={{ width: 72, height: 72, borderRadius: 20, background: "linear-gradient(135deg,#f4f0e8,#eef5ec)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+                  <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={30} style={{ color: "#9b9590" }} />
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#1c2b22", marginBottom: 8 }}>No products found</div>
+                <div style={{ fontSize: 14, color: "#9b9590", marginBottom: 24 }}>Add your first crop to start selling</div>
+                <button onClick={() => { setShowAdd(true); setShowEdit(null); setForm(blankForm); setImageFile(null); setImgPreview(""); }} className="action-btn"
+                  style={{ padding: "11px 24px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                  + Add Product
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 20 }}>
+                {filtered.map((p, i) => (
+                  <div key={p._id} className="prod-card fade-up"
+                    style={{ background: "#fff", borderRadius: 18, border: "1px solid #eeebe4", overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,.05)", transition: "all .22s", animationDelay: `${i * 0.04}s` }}>
+                    {/* Image */}
+                    <div style={{ height: 160, background: "linear-gradient(135deg,#e8f5e9,#f4f0e8)", position: "relative", overflow: "hidden" }}>
+                      {p.imageUrl ? (
+                        <img src={`http://localhost:5000${p.imageUrl}`} alt={p.cropName} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      ) : (
+                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={36} style={{ color: "#9b9590" }} />
                         </div>
                       )}
-                    </div>
-
-                    {/* Status dot overlay */}
-                    <div style={{ position: "absolute", top: "10px", left: "10px" }}>
-                      <div style={{ width: 8, height: 8, borderRadius: "50%", border: "2px solid white",
-                        background: p.status === "Active" ? "#4caf50" : p.status === "Out of Stock" ? "#ff9800" : "#f44336",
-                        boxShadow: "0 0 0 2px rgba(0,0,0,.08)" }} />
-                    </div>
-                  </div>
-
-                  {/* Card Body */}
-                  <div style={{ padding: "14px 16px", flex: 1, display: "flex", flexDirection: "column" }}>
-                    {/* Name & category */}
-                    <div style={{ marginBottom: "12px" }}>
-                      <div style={{ fontSize: "15px", fontWeight: 700, color: "#1a3a2a",
-                        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {p.cropName}
-                      </div>
-                      <div style={{ fontSize: "11px", color: "#b0ada8", marginTop: "2px" }}>
-                        {p.category}
+                      {/* Status dot */}
+                      <div style={{ position: "absolute", top: 10, right: 10 }}>
+                        <StatusBadge s={p.status} />
                       </div>
                     </div>
-
-                    {/* Price & stock */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end",
-                      marginBottom: "10px", padding: "10px 12px", background: "#f8f6f2",
-                      borderRadius: "10px" }}>
-                      <div>
-                        <div style={{ fontSize: "10px", color: "#b0ada8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>Price</div>
-                        <div style={{ fontSize: "17px", fontWeight: 800, color: "#1a3a2a", lineHeight: 1.2 }}>
-                          Rs.{p.price}<span style={{ fontSize: "10px", fontWeight: 400, color: "#9b9b9b" }}>/kg</span>
+                    {/* Info */}
+                    <div style={{ padding: "16px 18px" }}>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: "#1c2b22", marginBottom: 2 }}>{p.cropName}</div>
+                      <div style={{ fontSize: 12, color: "#9b9590", marginBottom: 14 }}>{p.category}</div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f9f7f4", borderRadius: 10, padding: "10px 14px", marginBottom: 14 }}>
+                        <div>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: "#a09a90", textTransform: "uppercase", letterSpacing: ".06em" }}>Price</div>
+                          <div style={{ fontSize: 17, fontWeight: 800, color: "#1a3a2a" }}>Rs.{p.price.toLocaleString()}<span style={{ fontSize: 11, fontWeight: 500, color: "#9b9590" }}>/{p.unit || "kg"}</span></div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: "#a09a90", textTransform: "uppercase", letterSpacing: ".06em" }}>Stock</div>
+                          <div style={{ fontSize: 17, fontWeight: 800, color: p.stock === 0 ? "#ef4444" : "#1a3a2a" }}>{p.stock}<span style={{ fontSize: 11, fontWeight: 500, color: "#9b9590" }}>{p.unit || "kg"}</span></div>
                         </div>
                       </div>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: "10px", color: "#b0ada8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>Stock</div>
-                        <div style={{ fontSize: "17px", fontWeight: 800, lineHeight: 1.2,
-                          color: p.stock === 0 ? "#ef4444" : "#1a3a2a" }}>
-                          {p.stock}<span style={{ fontSize: "10px", fontWeight: 400, color: "#9b9b9b" }}>kg</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Meta info */}
-                    {(p.harvestDate || p.trustScore > 0) && (
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
-                        {p.harvestDate && (
-                          <div style={{ fontSize: "11px", color: "#9b9b9b" }}>
-                            🗓 {new Date(p.harvestDate).toLocaleDateString("en-CA")}
-                          </div>
-                        )}
-                        {p.trustScore > 0 && (
-                          <div style={{ fontSize: "11px", color: "#6b8070", fontWeight: 600 }}>
-                            ★ {p.trustScore}%
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Footer */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto" }}>
-                      <span style={{ fontSize: "11px", fontWeight: 700, padding: "4px 10px", borderRadius: "100px",
-                        ...statusStyle(p.status) }}>
-                        {p.status}
-                      </span>
-                      <div style={{ display: "flex", gap: "6px" }}>
-                        <button onClick={() => { setSelected(p); setModal("edit"); }}
-                          style={{ height: "30px", padding: "0 12px", borderRadius: "8px",
-                            border: "1.5px solid #e0ddd6", background: "white", cursor: "pointer",
-                            fontSize: "12px", fontWeight: 600, color: "#1a3a2a",
-                            transition: "all .15s" }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#f0ede8"; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "white"; }}>
+                      {p.createdAt && <div style={{ fontSize: 11, color: "#b0ada8", marginBottom: 14, display: "flex", alignItems: "center", gap: 5 }}>
+                        <Icon d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" size={12} />
+                        {new Date(p.createdAt).toLocaleDateString()}
+                      </div>}
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={() => {
+                            setShowEdit(p); setShowAdd(true);
+                            setForm({ cropName: p.cropName, category: p.category, price: String(p.price), stock: String(p.stock), description: p.description || "", unit: p.unit || "kg", type: p.type || "Organic", harvestDate: p.harvestDate ? new Date(p.harvestDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0] });
+                            setImageFile(null);
+                            setImgPreview(p.imageUrl ? `http://localhost:5000${p.imageUrl}` : "");
+                            if (fileRef.current) fileRef.current.value = "";
+                          }} className="action-btn"
+                          style={{ flex: 1, padding: "8px", background: "#f4f0e8", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#1a3a2a", cursor: "pointer" }}>
                           Edit
                         </button>
-                        <button onClick={() => handleDelete(p._id)} disabled={deleting === p._id}
-                          style={{ height: "30px", padding: "0 12px", borderRadius: "8px",
-                            border: "1.5px solid #fcd0d0", background: "#fff5f5", cursor: "pointer",
-                            fontSize: "12px", fontWeight: 600, color: "#c0392b",
-                            opacity: deleting === p._id ? 0.5 : 1, transition: "all .15s" }}>
+                        <button onClick={() => handleDelete(p._id)} disabled={deleting === p._id} className="action-btn"
+                          style={{ flex: 1, padding: "8px", background: "#fff0f0", border: "1px solid #fcd0d0", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#c0392b", cursor: "pointer" }}>
                           {deleting === p._id ? "…" : "Delete"}
                         </button>
                       </div>
                     </div>
                   </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+
+      {/* ══ ADD / EDIT MODAL ══ */}
+      {showAdd && (
+        <div onClick={e => { if (e.target === e.currentTarget) resetModal(); }}
+          style={{ position: "fixed", inset: 0, background: "rgba(10,20,14,.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div className="slide-in" style={{ background: "#fff", borderRadius: 24, padding: "36px", width: "100%", maxWidth: 520, boxShadow: "0 32px 80px rgba(0,0,0,.25)", maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <div>
+                <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1a3a2a", fontFamily: "'Playfair Display',serif" }}>{showEdit ? "Edit Product" : "Add New Product"}</h2>
+                <p style={{ fontSize: 13, color: "#9b9590", marginTop: 4 }}>{showEdit ? "Update your listing details" : "List a new crop for sale"}</p>
+              </div>
+              <button onClick={resetModal}
+                style={{ background: "#f4f0e8", border: "none", width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#6b8070" }}>
+                <Icon d="M6 18L18 6M6 6l12 12" size={16} />
+              </button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {[
+                { label: "Crop Name *", key: "cropName", placeholder: "e.g. Tomato, Carrot…", type: "text" },
+                { label: "Price (Rs.) *", key: "price", placeholder: "e.g. 450", type: "number" },
+                { label: "Stock *", key: "stock", placeholder: "e.g. 100", type: "number" },
+                { label: "Description", key: "description", placeholder: "Describe your crop…", type: "textarea" },
+              ].map(f => (
+                <div key={f.key}>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>{f.label}</label>
+                  {f.type === "textarea" ? (
+                    <textarea value={(form as any)[f.key]} onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))} placeholder={f.placeholder} rows={3}
+                      style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4", resize: "vertical" }} />
+                  ) : (
+                    <input type={f.type} value={(form as any)[f.key]} onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))} placeholder={f.placeholder}
+                      style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4" }} />
+                  )}
                 </div>
               ))}
-            </div>
-          )}
-        </div>
-      </main>
+              {/* Image upload */}
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>
+                  Product Photo <span style={{ fontSize: 10, fontWeight: 500, color: "#b0ada8", textTransform: "none" }}>(optional)</span>
+                </label>
 
-      {/* Modal */}
-      {(modal === "add" || modal === "edit") && (
-        <ProductModal
-          product={modal === "edit" ? selected : null}
-          onClose={() => { setModal(null); setSelected(null); }}
-          onSaved={fetchProducts}
-        />
+                {/* Preview */}
+                {imgPreview && (
+                  <div style={{ position: "relative", marginBottom: 10, borderRadius: 12, overflow: "hidden", border: "1.5px solid #e0ddd6", height: 150 }}>
+                    <img src={imgPreview} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <button
+                      onClick={() => { setImageFile(null); setImgPreview(""); if (fileRef.current) fileRef.current.value = ""; }}
+                      style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,.65)", border: "none", width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff" }}>
+                      <Icon d="M6 18L18 6M6 6l12 12" size={13} />
+                    </button>
+                    <div style={{ position: "absolute", bottom: 8, left: 8, background: "rgba(0,0,0,.55)", borderRadius: 6, padding: "3px 8px", fontSize: 11, color: "#fff", fontWeight: 600 }}>
+                      {imageFile ? imageFile.name : "Current photo"}
+                    </div>
+                  </div>
+                )}
+
+                {/* Drop zone */}
+                <div
+                  onClick={() => fileRef.current?.click()}
+                  style={{ border: "2px dashed #d0ddd6", borderRadius: 12, padding: "22px 16px", textAlign: "center", cursor: "pointer", background: "#fafaf8", transition: "all .2s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#6aaa78"; e.currentTarget.style.background = "#f0faf2"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#d0ddd6"; e.currentTarget.style.background = "#fafaf8"; }}
+                  onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = "#6aaa78"; e.currentTarget.style.background = "#f0faf2"; }}
+                  onDragLeave={e => { e.currentTarget.style.borderColor = "#d0ddd6"; e.currentTarget.style.background = "#fafaf8"; }}
+                  onDrop={e => {
+                    e.preventDefault();
+                    e.currentTarget.style.borderColor = "#d0ddd6";
+                    e.currentTarget.style.background = "#fafaf8";
+                    const file = e.dataTransfer.files[0];
+                    if (file) handleFile(file);
+                  }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 11, background: "#e8f5e9", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px" }}>
+                    <Icon d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" size={20} style={{ color: "#6aaa78" }} />
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#1c2b22", marginBottom: 3 }}>
+                    {imgPreview ? "Replace Photo" : "Upload Crop Photo"}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#9b9590" }}>Click or drag & drop · JPG, PNG, WebP · Max 5MB</div>
+                </div>
+
+                {/* Hidden file input */}
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  style={{ display: "none" }}
+                  onChange={e => { const file = e.target.files?.[0]; if (file) handleFile(file); }}
+                />
+              </div>
+
+              {/* Category + Type row */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>Category *</label>
+                  <select value={form.category} onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))}
+                    style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4" }}>
+                    {["Vegetable","Leafy Green","Root","Fruit","Grain","Herb","Other"].map(c => <option key={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>Type *</label>
+                  <select value={form.type} onChange={e => setForm(prev => ({ ...prev, type: e.target.value }))}
+                    style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4" }}>
+                    {["Organic","Conventional"].map(t => <option key={t}>{t}</option>)}
+                  </select>
+                </div>
+              </div>
+              {/* Harvest Date + Unit row */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>Harvest Date *</label>
+                  <input type="date" value={form.harvestDate} onChange={e => setForm(prev => ({ ...prev, harvestDate: e.target.value }))}
+                    style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4" }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: "#9b9086", textTransform: "uppercase", letterSpacing: ".06em", display: "block", marginBottom: 6 }}>Unit</label>
+                  <select value={form.unit} onChange={e => setForm(prev => ({ ...prev, unit: e.target.value }))}
+                    style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #e0ddd6", borderRadius: 10, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4" }}>
+                    {["kg","g","litre","bunch","piece"].map(u => <option key={u}>{u}</option>)}
+                  </select>
+                </div>
+              </div>
+              <button onClick={handleSave} disabled={saving} className="action-btn"
+                style={{ padding: "13px", background: saving ? "#6b8070" : "linear-gradient(135deg,#1a3a2a,#2d5a3d)", color: "#fff", border: "none", borderRadius: 11, fontSize: 15, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.75 : 1, marginTop: 4, transition: "all .2s" }}>
+                {saving ? "Saving…" : showEdit ? "Update Product" : "Add Product"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
-      <style>{`
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-      `}</style>
-    </div>
+      {/* Toast */}
+      {toast && (
+        <div className="toast" style={{ position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)", background: toast.startsWith("Product") || toast.startsWith("Marked") || toast.startsWith("Deleted") ? "#1a3a2a" : "#c0392b", color: "#fff", padding: "13px 24px", borderRadius: 12, fontSize: 14, fontWeight: 600, boxShadow: "0 8px 24px rgba(0,0,0,.25)", zIndex: 400, whiteSpace: "nowrap" }}>
+          {toast}
+        </div>
+      )}
+    </>
   );
 }
