@@ -1868,7 +1868,7 @@ export default function ProductsPage() {
               </div>
               {/* Add Product */}
               <button onClick={() => { setShowAdd(true); setShowEdit(null); setForm(blankForm); setImageFile(null); setImgPreview(""); if (fileRef.current) fileRef.current.value = ""; }} className="action-btn"
-                style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 4px 14px rgba(26,58,42,.25)" }}>
+                style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", border: "none", borderRadius: 99, fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 4px 14px rgba(26,58,42,.25)", whiteSpace: "nowrap", flexShrink: 0, width: "auto", height: "auto" }}>
                 <Icon d="M12 4v16m8-8H4" size={15} />
                 Add Product
               </button>

@@ -469,7 +469,7 @@ export default function EarningsPage() {
         body{font-family:'DM Sans',sans-serif;background:#f2efe8;}
         ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:#d0cdc6;border-radius:10px;}
         .nav-btn:hover{background:rgba(106,170,120,.15)!important;color:#fff!important;}
-        .action-btn:hover{opacity:.88;}
+        .hover-btn:hover{opacity:.88;}
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
         .fade-up{animation:fadeUp .32s ease both;}
         @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}} .pulse{animation:pulse 2s infinite;}
@@ -486,7 +486,7 @@ export default function EarningsPage() {
                 Ag<span style={{ color: "#6aaa78" }}>real</span>
               </div>
             )}
-            <button onClick={() => setSideCollapsed(p => !p)} className="action-btn" style={{ background: "rgba(255,255,255,.07)", border: "none", borderRadius: 8, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,.5)", flexShrink: 0 }}>
+            <button onClick={() => setSideCollapsed(p => !p)} className="hover-btn" style={{ background: "rgba(255,255,255,.07)", border: "none", borderRadius: 8, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,.5)", flexShrink: 0 }}>
               <Icon d={sideCollapsed ? "M13 5l7 7-7 7M5 5l7 7-7 7" : "M11 19l-7-7 7-7m8 14l-7-7 7-7"} size={14} />
             </button>
           </div>
@@ -532,7 +532,7 @@ export default function EarningsPage() {
         <main style={{ marginLeft: SBW, flex: 1, display: "flex", flexDirection: "column", transition: "margin-left .28s cubic-bezier(.4,0,.2,1)", minHeight: "100vh" }}>
           <header style={{ background: "rgba(255,255,255,.92)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(0,0,0,.07)", padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 40 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <button onClick={() => router.back()} className="action-btn" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, background: "#f4f0e8", border: "1px solid #e0ddd6", cursor: "pointer", flexShrink: 0 }}>
+              <button onClick={() => router.back()} className="hover-btn" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 10, background: "#f4f0e8", border: "1px solid #e0ddd6", cursor: "pointer", flexShrink: 0 }}>
                 <Icon d="M15 19l-7-7 7-7" size={16} style={{ color: "#1a3a2a" }} />
               </button>
               <div>
@@ -545,7 +545,7 @@ export default function EarningsPage() {
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <button onClick={() => setShowPlans(true)} className="action-btn"
+              <button onClick={() => setShowPlans(true)} className="hover-btn"
                 style={{ padding: "8px 16px", background: "linear-gradient(135deg,#d4a853,#f0c96b)", border: "none", borderRadius: 9, fontSize: 12, fontWeight: 700, color: "#1a3a2a", cursor: "pointer" }}>
                 View Plans
               </button>
@@ -570,7 +570,7 @@ export default function EarningsPage() {
                     </div>
                   )}
                 </div>
-                <button onClick={() => setShowPlans(true)} className="action-btn"
+                <button onClick={() => setShowPlans(true)} className="hover-btn"
                   style={{ padding: "10px 20px", background: "rgba(255,255,255,.15)", border: "1px solid rgba(255,255,255,.25)", borderRadius: 10, fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer" }}>
                   {sub.isActive ? "Upgrade Plan" : "Renew Now"}
                 </button>
@@ -614,7 +614,7 @@ export default function EarningsPage() {
                 <div className="fade-up" style={{ background: "#fff", borderRadius: 20, border: "1px solid #eeebe4", boxShadow: "0 2px 10px rgba(0,0,0,.04)", overflow: "hidden" }}>
                   <div style={{ padding: "20px 24px", borderBottom: "1px solid #f4f0ec", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: "#1c2b22" }}>Recent Transactions</div>
-                    <button onClick={() => router.push("/dashboard/farmer/orders")} className="action-btn"
+                    <button onClick={() => router.push("/dashboard/farmer/orders")} className="hover-btn"
                       style={{ fontSize: 12, fontWeight: 600, color: "#6aaa78", background: "none", border: "none", cursor: "pointer" }}>
                       View all orders →
                     </button>
@@ -717,7 +717,7 @@ export default function EarningsPage() {
                       </div>
                     ))}
                   </div>
-                  <button onClick={() => router.push("/subscription")} className="action-btn"
+                  <button onClick={() => router.push("/subscription")} className="hover-btn"
                     style={{ width: "100%", padding: "11px", background: pkg.highlight ? "#6aaa78" : "linear-gradient(135deg,#1a3a2a,#2d5a3d)", color: "#fff", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                     Get Started
                   </button>

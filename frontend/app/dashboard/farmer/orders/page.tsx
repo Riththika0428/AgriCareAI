@@ -1191,10 +1191,10 @@ export default function OrdersPage() {
                   <div style={{ fontSize: 12, color: "#9b9590", marginTop: 2 }}>{orders.length} total orders</div>
                 </div>
                 {/* Tabs */}
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {TABS.map(t => (
-                    <button key={t} onClick={() => setTab(t)} className="action-btn"
-                      style={{ padding: "6px 14px", borderRadius: 99, border: "1.5px solid", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all .18s", background: tab === t ? "#1a3a2a" : "#fff", color: tab === t ? "#fff" : "#6b8070", borderColor: tab === t ? "#1a3a2a" : "#e0ddd6" }}>
+                    <button key={t} onClick={() => setTab(t)} className="filter-chip"
+                      style={{ padding: "7px 16px", borderRadius: 99, border: "1.5px solid", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all .18s", background: tab === t ? "#1a3a2a" : "#fff", color: tab === t ? "#fff" : "#6b8070", borderColor: tab === t ? "#1a3a2a" : "#e0ddd6" }}>
                       {t}
                     </button>
                   ))}

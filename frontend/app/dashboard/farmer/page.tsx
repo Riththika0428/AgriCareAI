@@ -270,7 +270,7 @@ export default function FarmerDashboard() {
         ::-webkit-scrollbar-thumb{background:#d0cdc6;border-radius:10px;}
         .nav-btn:hover{background:rgba(106,170,120,.12)!important;color:rgba(255,255,255,.9)!important;}
         .card-hover:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(26,58,42,.12)!important;}
-        .action-btn:hover{opacity:.85;}
+        .hover-btn:hover{opacity:.85;}
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
         .fade-up{animation:fadeUp .35s ease both;}
         .fade-up-1{animation-delay:.05s;} .fade-up-2{animation-delay:.1s;}
@@ -302,7 +302,7 @@ export default function FarmerDashboard() {
               style={{ background:"rgba(255,255,255,.07)", border:"none", borderRadius:8,
                 width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center",
                 cursor:"pointer", color:"rgba(255,255,255,.5)", flexShrink:0, transition:"all .2s" }}
-              className="action-btn">
+              className="hover-btn">
               <Icon d={sideCollapsed ? "M13 5l7 7-7 7M5 5l7 7-7 7" : "M11 19l-7-7 7-7m8 14l-7-7 7-7"} size={14} />
             </button>
           </div>
@@ -403,7 +403,7 @@ export default function FarmerDashboard() {
               <span style={{ fontSize:13, color:"#78350f", fontWeight:600 }}>
                 Subscription expires {new Date(sub.currentPeriodEnd).toLocaleDateString("en-US",{month:"long",day:"numeric"})}
               </span>
-              <button onClick={()=>router.push("/dashboard/farmer/earnings")} className="action-btn"
+              <button onClick={()=>router.push("/dashboard/farmer/earnings")} className="hover-btn"
                 style={{ background:"#d97706", color:"#fff", border:"none", borderRadius:7, padding:"5px 14px", fontSize:12, fontWeight:700, cursor:"pointer" }}>
                 Renew Now
               </button>
@@ -420,7 +420,7 @@ export default function FarmerDashboard() {
             <div style={{ display:"flex", alignItems:"center", gap:14 }}>
               {/* Back button — only shown on sub-pages, not on overview */}
               {pathname !== "/dashboard/farmer" && (
-                <button onClick={()=>router.back()} className="action-btn"
+                <button onClick={()=>router.back()} className="hover-btn"
                   title="Go back"
                   style={{ display:"flex", alignItems:"center", justifyContent:"center",
                     width:36, height:36, borderRadius:10, background:"#f4f0e8",
@@ -459,23 +459,23 @@ export default function FarmerDashboard() {
               {/* Quick action buttons — only on overview */}
               {pathname === "/dashboard/farmer" && (
                 <>
-                  <button onClick={()=>router.push("/dashboard/farmer/products")} className="action-btn"
-                    style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", background:"#f4f0e8",
-                      border:"1px solid #e0ddd6", borderRadius:9, fontSize:12, fontWeight:600, color:"#1a3a2a", cursor:"pointer" }}>
+                  <button onClick={()=>router.push("/dashboard/farmer/products")} className="hover-btn"
+                    style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 16px", background:"#f4f0e8",
+                      border:"1px solid #e0ddd6", borderRadius:99, fontSize:12, fontWeight:600, color:"#1a3a2a", cursor:"pointer", whiteSpace:"nowrap", flexShrink:0, width:"auto", height:"auto" }}>
                     <Icon d="M12 4v16m8-8H4" size={14} />
                     Add Product
                   </button>
-                  <button onClick={()=>router.push("/dashboard/farmer/crop-doctor")} className="action-btn"
-                    style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px",
+                  <button onClick={()=>router.push("/dashboard/farmer/crop-doctor")} className="hover-btn"
+                    style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 16px",
                       background:"linear-gradient(135deg,#1a3a2a,#2d5a3d)", border:"none",
-                      borderRadius:9, fontSize:12, fontWeight:600, color:"#fff", cursor:"pointer" }}>
+                      borderRadius:99, fontSize:12, fontWeight:600, color:"#fff", cursor:"pointer", whiteSpace:"nowrap", flexShrink:0, width:"auto", height:"auto" }}>
                     <Icon d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" size={14} />
                     Scan Crop
                   </button>
                 </>
               )}
               {pendingCount > 0 && (
-                <button onClick={()=>router.push("/dashboard/farmer/orders")} className="action-btn"
+                <button onClick={()=>router.push("/dashboard/farmer/orders")} className="hover-btn"
                   style={{ position:"relative", width:38, height:38, borderRadius:"50%",
                     background:"#fff", border:"1px solid #e0ddd6", display:"flex", alignItems:"center",
                     justifyContent:"center", cursor:"pointer" }}>
@@ -539,7 +539,7 @@ export default function FarmerDashboard() {
                       <span style={{ fontSize:12, fontWeight:600, color:"#fde68a" }}>
                         Disease alert: {latestDisease.cropName} — {latestDisease.diagnosis}
                       </span>
-                      <button onClick={()=>router.push("/dashboard/farmer/crop-doctor")} className="action-btn"
+                      <button onClick={()=>router.push("/dashboard/farmer/crop-doctor")} className="hover-btn"
                         style={{ background:"rgba(255,255,255,.15)", border:"none", color:"#fff",
                           borderRadius:6, padding:"3px 10px", fontSize:11, fontWeight:700, cursor:"pointer" }}>
                         Treat
@@ -548,13 +548,13 @@ export default function FarmerDashboard() {
                   )}
                 </div>
                 <div style={{ display:"flex", flexDirection:"column", gap:10, alignItems:"flex-end" }}>
-                  <button onClick={()=>router.push("/dashboard/farmer/weather")} className="action-btn"
+                  <button onClick={()=>router.push("/dashboard/farmer/weather")} className="hover-btn"
                     style={{ background:"rgba(255,255,255,.12)", border:"1px solid rgba(255,255,255,.2)",
                       color:"#fff", borderRadius:10, padding:"9px 18px", fontSize:12,
                       fontWeight:600, cursor:"pointer" }}>
                     View Weather
                   </button>
-                  <button onClick={()=>setShowPackages(true)} className="action-btn"
+                  <button onClick={()=>setShowPackages(true)} className="hover-btn"
                     style={{ background:"#6aaa78", border:"none",
                       color:"#fff", borderRadius:10, padding:"9px 18px", fontSize:12,
                       fontWeight:700, cursor:"pointer" }}>
@@ -590,7 +590,7 @@ export default function FarmerDashboard() {
                     <div style={{ fontSize:15, fontWeight:700, color:"#1c2b22" }}>Recent Orders</div>
                     <div style={{ fontSize:11, color:"#9b9590", marginTop:2 }}>{recentOrders.length} orders shown</div>
                   </div>
-                  <button onClick={()=>router.push("/dashboard/farmer/orders")} className="action-btn"
+                  <button onClick={()=>router.push("/dashboard/farmer/orders")} className="hover-btn"
                     style={{ display:"flex", alignItems:"center", gap:5, padding:"6px 12px",
                       background:"#f4f0e8", border:"none", borderRadius:8, fontSize:12,
                       fontWeight:600, color:"#1a3a2a", cursor:"pointer" }}>
@@ -666,7 +666,7 @@ export default function FarmerDashboard() {
                   boxShadow:"0 2px 10px rgba(0,0,0,.04)", flex:1, overflow:"hidden" }}>
                   <div style={{ padding:"16px 20px 12px", display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:"1px solid #f4f0ec" }}>
                     <div style={{ fontSize:14, fontWeight:700, color:"#1c2b22" }}>Disease History</div>
-                    <button onClick={()=>router.push("/dashboard/farmer/crop-doctor")} className="action-btn"
+                    <button onClick={()=>router.push("/dashboard/farmer/crop-doctor")} className="hover-btn"
                       style={{ background:"none", border:"none", fontSize:11, color:"#6aaa78", cursor:"pointer", fontWeight:600 }}>
                       See all
                     </button>
@@ -703,13 +703,13 @@ export default function FarmerDashboard() {
                     <div style={{ fontSize:11, color:"#9b9590", marginTop:2 }}>{activeProds} active · {products.length} total</div>
                   </div>
                   <div style={{ display:"flex", gap:8 }}>
-                    <button onClick={()=>router.push("/dashboard/farmer/products")} className="action-btn"
+                    <button onClick={()=>router.push("/dashboard/farmer/products")} className="hover-btn"
                       style={{ padding:"6px 12px", background:"linear-gradient(135deg,#1a3a2a,#2d5a3d)",
                         border:"none", borderRadius:8, fontSize:12, fontWeight:600,
                         color:"#fff", cursor:"pointer" }}>
                       + Add
                     </button>
-                    <button onClick={()=>router.push("/dashboard/farmer/products")} className="action-btn"
+                    <button onClick={()=>router.push("/dashboard/farmer/products")} className="hover-btn"
                       style={{ padding:"6px 12px", background:"#f4f0e8",
                         border:"none", borderRadius:8, fontSize:12, fontWeight:600,
                         color:"#1a3a2a", cursor:"pointer" }}>
@@ -724,7 +724,7 @@ export default function FarmerDashboard() {
                       <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" size={22} style={{color:"#c0bdb5"}} />
                     </div>
                     <div style={{ fontSize:13, color:"#9b9590", marginBottom:12 }}>No products listed</div>
-                    <button onClick={()=>router.push("/dashboard/farmer/products")} className="action-btn"
+                    <button onClick={()=>router.push("/dashboard/farmer/products")} className="hover-btn"
                       style={{ background:"linear-gradient(135deg,#1a3a2a,#2d5a3d)", color:"#fff",
                         border:"none", borderRadius:9, padding:"9px 20px", fontSize:12,
                         fontWeight:700, cursor:"pointer" }}>
@@ -793,12 +793,12 @@ export default function FarmerDashboard() {
                       </div>
                     )}
                     <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-                      <button onClick={()=>setShowPackages(true)} className="action-btn"
+                      <button onClick={()=>setShowPackages(true)} className="hover-btn"
                         style={{ background:"#6aaa78", color:"#fff", border:"none",
                           borderRadius:9, padding:"10px 8px", fontSize:12, fontWeight:700, cursor:"pointer" }}>
                         View Plans
                       </button>
-                      <button onClick={()=>router.push("/dashboard/farmer/earnings")} className="action-btn"
+                      <button onClick={()=>router.push("/dashboard/farmer/earnings")} className="hover-btn"
                         style={{ background:"rgba(255,255,255,.1)", color:"#fff",
                           border:"1px solid rgba(255,255,255,.15)", borderRadius:9,
                           padding:"10px 8px", fontSize:12, fontWeight:600, cursor:"pointer" }}>
@@ -819,7 +819,7 @@ export default function FarmerDashboard() {
                       { label:"View earnings",      href:"/dashboard/farmer/earnings",    d:"M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
                       { label:"Edit my profile",    href:"#",                             d:"M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z", action:()=>setShowProfile(true) },
                     ].map(q=>(
-                      <button key={q.label} className="action-btn"
+                      <button key={q.label} className="hover-btn"
                         onClick={q.action || (()=>router.push(q.href))}
                         style={{ display:"flex", alignItems:"center", gap:10, padding:"9px 12px",
                           background:"#f9f7f4", border:"1px solid #f0ede8", borderRadius:9,
@@ -886,7 +886,7 @@ export default function FarmerDashboard() {
                       </div>
                     )}
                   </div>
-                  <button onClick={()=>router.push("/dashboard/farmer/earnings")} className="action-btn"
+                  <button onClick={()=>router.push("/dashboard/farmer/earnings")} className="hover-btn"
                     style={{ background:sub.isActive?"#1a3a2a":"#dc2626",
                       color:"#fff", border:"none", borderRadius:8,
                       padding:"5px 12px", fontSize:11, fontWeight:700, cursor:"pointer" }}>
@@ -976,7 +976,7 @@ export default function FarmerDashboard() {
                         placeholder="Tell consumers about your farm..." rows={3}
                         style={{ width:"100%", padding:"9px 12px", border:"1.5px solid #e0ddd6", borderRadius:9, fontFamily:"'DM Sans',sans-serif", fontSize:13, color:"#1a3a2a", background:"#f9f7f4", outline:"none", resize:"vertical", boxSizing:"border-box" }} />
                     </div>
-                    <button onClick={handleSaveProfile} disabled={saving} className="action-btn"
+                    <button onClick={handleSaveProfile} disabled={saving} className="hover-btn"
                       style={{ padding:"11px", background:"linear-gradient(135deg,#1a3a2a,#2d5a3d)",
                         color:"#fff", border:"none", borderRadius:9, fontSize:14,
                         fontWeight:700, cursor:"pointer", opacity:saving?0.7:1 }}>
@@ -985,7 +985,7 @@ export default function FarmerDashboard() {
                   </div>
                 )}
 
-                <button onClick={handleLogout} className="action-btn"
+                <button onClick={handleLogout} className="hover-btn"
                   style={{ width:"100%", marginTop:20, padding:"11px", background:"#fff0f0",
                     color:"#c0392b", border:"1px solid #fcd0d0", borderRadius:9,
                     fontSize:13, fontWeight:700, cursor:"pointer" }}>
@@ -1064,7 +1064,7 @@ export default function FarmerDashboard() {
                       ))}
                     </div>
                     <button onClick={()=>router.push(pkg.price===0?"/dashboard/farmer":"/subscription")}
-                      className="action-btn"
+                      className="hover-btn"
                       style={{
                         width:"100%", padding:"11px",
                         background:pkg.highlight?"#6aaa78":pkg.id==="free"?"#f4f0e8":"linear-gradient(135deg,#1a3a2a,#2d5a3d)",

@@ -60,9 +60,9 @@
 "use client";
 
 const PRODUCTS = [
-  { badge:"Just Harvested", icon:"🥦", bg:"#edf7ee", name:"Organic Broccoli",  farmer:"Nimal Perera",  farm:"Kandy Farm",  stars:5, reviews:48, price:"Rs. 120", unit:"/ 500g" },
-  { badge:"Organic",        icon:"🥕", bg:"#fef9eb", name:"Fresh Carrots",     farmer:"Kumari Silva", farm:"Nuwara Farm", stars:4, reviews:31, price:"Rs. 95",  unit:"/ kg"   },
-  { badge:"Best Seller",    icon:"🍅", bg:"#eef4fb", name:"Vine Tomatoes",     farmer:"Asanka Raj",   farm:"Matale Farm", stars:5, reviews:72, price:"Rs. 140", unit:"/ kg"   },
+  { badge: "Just Harvested", image: "/images/broccoli.png", icon: "🥦", bg: "#edf7ee", name: "Organic Broccoli", farmer: "Nimal Perera", farm: "Kandy Farm", stars: 5, reviews: 48, price: "Rs. 120", unit: "/ 500g" },
+  { badge: "Organic", image: "/images/carrots.png", icon: "🥕", bg: "#fef9eb", name: "Fresh Carrots", farmer: "Kumari Silva", farm: "Nuwara Farm", stars: 4, reviews: 31, price: "Rs. 95", unit: "/ kg" },
+  { badge: "Best Seller", image: "/images/tomatoes.png", icon: "🍅", bg: "#eef4fb", name: "Vine Tomatoes", farmer: "Asanka Raj", farm: "Matale Farm", stars: 5, reviews: 72, price: "Rs. 140", unit: "/ kg" },
 ];
 
 export default function Marketplace() {
@@ -84,7 +84,11 @@ export default function Marketplace() {
           {PRODUCTS.map(p => (
             <div className="product-card" key={p.name}>
               <div className="product-img" style={{ background: p.bg }}>
-                <span>{p.icon}</span>
+                {p.image ? (
+                  <img src={p.image} alt={p.name} style={{ height: "130px", objectFit: "contain", mixBlendMode: "multiply" }} />
+                ) : (
+                  <span>{p.icon}</span>
+                )}
                 <div className="product-badge">{p.badge}</div>
               </div>
               <div className="product-body">

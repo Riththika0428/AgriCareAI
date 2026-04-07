@@ -66,18 +66,6 @@ export default function Hero({ onFarmer, onConsumer }: Props) {
               style={{ backgroundImage: "url('/images/smart_farm.png')" }}
             >
               <div className="bento-overlay">
-                <div className="bento-badges-row top">
-                  <div className="bento-badge">
-                    <span className="badge-icon">🌿</span>
-                    Disease Analysis
-                  </div>
-                  <div className="bento-badge">
-                    ☀️ 28°
-                  </div>
-                </div>
-                <div className="bento-title-wrap">
-                  <div className="bento-title">The AI-Driven Smart Farm</div>
-                </div>
               </div>
             </div>
 
@@ -87,19 +75,6 @@ export default function Hero({ onFarmer, onConsumer }: Props) {
               style={{ backgroundImage: "url('/images/marketplace.png')", animationDelay: "200ms" }}
             >
               <div className="bento-overlay">
-                <div className="bento-badges-row top">
-                  <div className="bento-badge ml-auto">
-                    Transparency Loop
-                  </div>
-                </div>
-                <div className="qr-scanner">
-                   <div className="qr-box">
-                     <div className="scan-line"></div>
-                   </div>
-                </div>
-                <div className="bento-title-wrap">
-                  <div className="bento-title">Farm-to-Table Marketplace</div>
-                </div>
               </div>
             </div>
           </div>
@@ -111,23 +86,6 @@ export default function Hero({ onFarmer, onConsumer }: Props) {
               style={{ backgroundImage: "url('/images/nutritional_balance.png')", animationDelay: "400ms" }}
             >
               <div className="bento-overlay">
-
-
-                <div className="floating-stat stat-left">
-                  <div className="stat-dot"></div> Vit D 18.2%
-                </div>
-                <div className="floating-stat stat-right">
-                  <div className="stat-dot"></div> Protein 28%
-                </div>
-
-                <div className="nutrition-bottom">
-                  <div className="bento-badge mb-2 inline-flex">
-                    <span className="badge-icon">✨</span> AI Recommendation Balanced
-                  </div>
-                  <div className="bento-title-wrap no-gradient">
-                    <div className="bento-title">The Nutritional Balance</div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

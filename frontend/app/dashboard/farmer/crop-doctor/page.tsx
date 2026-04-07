@@ -132,6 +132,7 @@ export default function CropDoctorPage() {
         ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:#d0cdc6;border-radius:10px;}
         .nav-btn:hover{background:rgba(106,170,120,.15)!important;color:#fff!important;}
         .action-btn:hover{opacity:.88;}
+        .hover-btn:hover{opacity:.88;}
         input:focus,textarea:focus{outline:none;border-color:#6aaa78!important;box-shadow:0 0 0 3px rgba(106,170,120,.15);}
         @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
         .fade-up{animation:fadeUp .32s ease both;}
@@ -295,7 +296,7 @@ export default function CropDoctorPage() {
                       </div>
                       <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
                       {!preview && (
-                        <button onClick={() => fileRef.current?.click()} className="action-btn"
+                        <button onClick={() => fileRef.current?.click()} className="hover-btn"
                           style={{ width: "100%", marginTop: 12, padding: "12px", background: "#f4f0e8", border: "1px solid #e0ddd6", borderRadius: 11, fontSize: 14, fontWeight: 600, color: "#1a3a2a", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                           <Icon d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z" size={16} />
                           Choose Photo
@@ -303,7 +304,7 @@ export default function CropDoctorPage() {
                       )}
                     </div>
                     {/* Analyze button */}
-                    <button onClick={handleAnalyze} disabled={analyzing || !cropName || !symptoms} className="action-btn"
+                    <button onClick={handleAnalyze} disabled={analyzing || !cropName || !symptoms} className="hover-btn"
                       style={{ padding: "14px", background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", opacity: (!cropName || !symptoms) ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 6px 20px rgba(26,58,42,.25)" }}>
                       {analyzing ? (
                         <>
@@ -377,7 +378,7 @@ export default function CropDoctorPage() {
                           {result.status === "resolved" ? "✓ Resolved" : "Active"}
                         </span>
                         {result.status !== "resolved" && (
-                          <button onClick={() => handleResolve(result._id)} className="action-btn"
+                          <button onClick={() => handleResolve(result._id)} className="hover-btn"
                             style={{ padding: "7px 14px", background: "#f0faf2", border: "1px solid #bbf7d0", borderRadius: 8, fontSize: 12, fontWeight: 700, color: "#15803d", cursor: "pointer" }}>
                             Mark Resolved
                           </button>
@@ -424,8 +425,8 @@ export default function CropDoctorPage() {
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                         <div style={{ fontSize: 11, color: "#b0ada8" }}>{new Date(d.createdAt).toLocaleDateString()}</div>
                         {d.status !== "resolved" && (
-                          <button onClick={() => handleResolve(d._id)} className="action-btn"
-                            style={{ fontSize: 11, fontWeight: 700, color: "#6aaa78", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                          <button onClick={() => handleResolve(d._id)} className="hover-btn"
+                            style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 99, background: "#dcfce7", color: "#15803d", border: "none", cursor: "pointer", transition: "all .2s" }}>
                             Resolve →
                           </button>
                         )}
