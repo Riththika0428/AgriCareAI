@@ -9,8 +9,8 @@ const router = express.Router();
 
 router.post("/",           protect, authorizeRoles("user","farmer"), createPayment);
 router.get("/my",          protect, getMyPayments);
-router.get("/earnings",    protect, authorizeRoles("farmer"),        getFarmerEarnings);
-router.put("/:id/refund",  protect, authorizeRoles("admin"),         refundPayment);
-router.get("/admin/all",   protect, authorizeRoles("admin"),         adminGetAllPayments);
+router.get("/earnings",    protect, authorizeRoles("farmer"), getFarmerEarnings);
+router.put("/:id/refund",  protect, authorizeRoles("admin"),  refundPayment);
+router.get("/admin/all",   protect, authorizeRoles("admin"),   adminGetAllPayments);
 
 export default router;

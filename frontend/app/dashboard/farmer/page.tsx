@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { profileAPI, orderAPI, productAPI, diseaseAPI } from "@/lib/axios-proxy";
+import { profileAPI, orderAPI, productAPI, diseaseAPI, validateSession, clearAuthAndRedirect } from "@/lib/axios-proxy";
 import api from "@/lib/axios-proxy";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -145,15 +145,23 @@ export default function FarmerDashboard() {
   });
 
   // ── Auth + data ───────────────────────────────────────────
-  useEffect(()=>{
-    const stored = localStorage.getItem("agriai_user");
-    const token  = localStorage.getItem("agriai_token");
-    if (!stored || !token) { router.push("/"); return; }
-    const u = JSON.parse(stored);
-    if (u.role !== "farmer" && u.role !== "admin") { router.push("/"); return; }
-    setUser(u);
-    if (u.role === "farmer") checkSub(u); else loadAll();
-  },[]);
+  useEffect(() => {
+    async function check() {
+      const u = await validateSession();
+      if (!u) {
+        clearAuthAndRedirect();
+        return;
+      }
+      // Strictly allow ONLY farmer role (admin can be allowed if explicitly needed, but for now strict is safer)
+      if (u.role !== "farmer") {
+        clearAuthAndRedirect();
+        return;
+      }
+      setUser(u);
+      checkSub(u);
+    }
+    check();
+  }, []);
 
   const checkSub = async (u: User) => {
     try {
@@ -220,9 +228,7 @@ export default function FarmerDashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("agriai_token");
-    localStorage.removeItem("agriai_user");
-    router.push("/");
+    clearAuthAndRedirect();
   };
 
   const greeting = () => { const h=new Date().getHours(); return h<12?"Good morning":h<17?"Good afternoon":"Good evening"; };

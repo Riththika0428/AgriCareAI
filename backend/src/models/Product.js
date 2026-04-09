@@ -69,7 +69,20 @@ productSchema.pre("save", function () {
   }
 });
 
-const Product = mongoose.model("Product", productSchema);
+// Also handle findOneAndUpdate / findByIdAndUpdate (defence-in-depth)
+productSchema.pre("findOneAndUpdate", function () {
+  const update = this.getUpdate();
+  if (update && update.stock !== undefined) {
+    if (update.stock === 0) {
+      this.set({ status: "Out of Stock" });
+    } else if (update.stock > 0) {
+      // Only flip back to Active if it was previously Out of Stock
+      // We can't read the old doc here, so set conditionally via $set
+      // This is a best-effort; the pre("save") hook is the primary guard
+    }
+  }
+});
 
+const Product = mongoose.model("Product", productSchema);
 
 export default Product;

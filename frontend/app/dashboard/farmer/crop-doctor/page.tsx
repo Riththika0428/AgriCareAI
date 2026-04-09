@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { diseaseAPI, profileAPI } from "@/lib/axios-proxy";
+import { diseaseAPI, profileAPI, validateSession, clearAuthAndRedirect } from "@/lib/axios-proxy";
 import api from "@/lib/axios-proxy";
 
 interface User    { _id: string; name: string; email: string; role: string; }
@@ -50,16 +50,28 @@ export default function CropDoctorPage() {
   const [symptoms,      setSymptoms]      = useState("");
   const [toast,         setToast]         = useState("");
   const [drag,          setDrag]          = useState(false);
+  const [aiProvider,    setAiProvider]    = useState<string | null>(null);
 
   const SBW = sideCollapsed ? 68 : 220;
   const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; };
   const getInitial = () => (user?.name || "F")[0].toUpperCase();
 
   useEffect(() => {
-    const stored = localStorage.getItem("agriai_user");
-    const token  = localStorage.getItem("agriai_token");
-    if (!stored || !token) { router.push("/"); return; }
-    const u = JSON.parse(stored); setUser(u); loadData();
+    async function check() {
+      const u = await validateSession();
+      if (!u) {
+        clearAuthAndRedirect();
+        return;
+      }
+      // Strictly allow ONLY farmer role
+      if (u.role !== "farmer") {
+        clearAuthAndRedirect();
+        return;
+      }
+      setUser(u);
+      loadData();
+    }
+    check();
   }, []);
 
   const loadData = async () => {
@@ -91,12 +103,24 @@ export default function CropDoctorPage() {
       formData.append("symptoms", symptoms);
       if (imageFile) formData.append("image", imageFile);
       const { data } = await diseaseAPI.scan(formData);
-      const d = data.disease || data;
-      setResult(d);
-      setDiseases(prev => [d, ...prev]);
-      showToast("Analysis complete!");
+      
+      const scanRec = data.scan || data;
+      setAiProvider(data.aiProvider || "gemini-vision");
+      
+      const uiResult = {
+        ...scanRec,
+        diagnosis: scanRec.detailedAnalysis || scanRec.diagnosis || "No detailed diagnosis provided.",
+        treatment: [
+          ...(scanRec.organicTreatments || []).map((t:any) => `[Organic] ${t.name}: ${t.instruction} (Dosage: ${t.dosage})`),
+          ...(scanRec.chemicalTreatments || []).map((t:any) => `[Chemical] ${t.name}: ${t.warning} (Dosage: ${t.dosage})`)
+        ].join("\n\n") || scanRec.treatment || "No treatment recommended."
+      };
+
+      setResult(uiResult);
+      setDiseases(prev => [uiResult, ...prev]);
+      showToast(data.message || "Analysis complete!");
     } catch (e: any) {
-      showToast(e.response?.data?.message || "Analysis failed. Please try again.");
+      showToast(e.response?.data?.message || "Analysis failed. AI services might be busy.");
     }
     setAnalyzing(false);
   };
@@ -110,7 +134,7 @@ export default function CropDoctorPage() {
     } catch { showToast("Failed to update."); }
   };
 
-  const handleLogout = () => { localStorage.removeItem("agriai_token"); localStorage.removeItem("agriai_user"); router.push("/"); };
+  const handleLogout = () => { clearAuthAndRedirect(); };
 
   if (loading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f4f0e8", fontFamily: "'DM Sans',sans-serif" }}>
@@ -217,7 +241,7 @@ export default function CropDoctorPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", background: "#dcfce7", border: "1px solid #bbf7d0", borderRadius: 99, fontSize: 12, fontWeight: 700, color: "#15803d" }}>
                 <span className="pulse" style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />
-                Cerebras AI Active
+                Gemini AI Active
               </div>
               <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#6aaa78,#2d5a3d)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 15, border: "2px solid rgba(255,255,255,.8)", boxShadow: "0 2px 8px rgba(45,90,61,.3)", cursor: "pointer" }}>{getInitial()}</div>
             </div>
@@ -233,7 +257,7 @@ export default function CropDoctorPage() {
               </div>
               <div>
                 <h1 style={{ fontSize: 26, fontWeight: 800, color: "#1c2b22", fontFamily: "'Playfair Display',serif" }}>Crop Doctor</h1>
-                <p style={{ fontSize: 13, color: "#9b9590", marginTop: 3 }}>Upload a photo of your crop for instant AI diagnosis · Powered by Cerebras AI</p>
+                <p style={{ fontSize: 13, color: "#9b9590", marginTop: 3 }}>Upload a photo of your crop for instant AI diagnosis · Powered by Gemini AI</p>
               </div>
             </div>
 
@@ -264,7 +288,7 @@ export default function CropDoctorPage() {
                         style={{ width: "100%", padding: "12px 16px", border: "1.5px solid #e0ddd6", borderRadius: 11, fontFamily: "'DM Sans',sans-serif", fontSize: 14, color: "#1a3a2a", background: "#f9f7f4", resize: "vertical" }} />
                       <div style={{ fontSize: 11, color: "#9b9590", marginTop: 6, display: "flex", alignItems: "center", gap: 5 }}>
                         <Icon d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" size={13} style={{ color: "#9b9590", flexShrink: 0 }} />
-                        Cerebras AI uses this — be as specific as possible for better accuracy
+                        Gemini AI uses this — be as specific as possible for better accuracy
                       </div>
                     </div>
                     {/* Image upload */}
@@ -316,7 +340,7 @@ export default function CropDoctorPage() {
                       ) : (
                         <>
                           <Icon d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" size={18} />
-                          Analyze Crop
+                          Analyze with Gemini AI
                         </>
                       )}
                     </button>
@@ -341,7 +365,7 @@ export default function CropDoctorPage() {
                         </svg>
                       </div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: "#1c2b22", marginBottom: 6 }}>Analyzing your crop…</div>
-                      <div style={{ fontSize: 13, color: "#9b9590" }}>Cerebras AI is processing your request</div>
+                      <div style={{ fontSize: 13, color: "#9b9590" }}>Gemini AI is analyzing your crop photo…</div>
                     </div>
                   ) : result ? (
                     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -349,13 +373,19 @@ export default function CropDoctorPage() {
                       <div style={{ background: "linear-gradient(135deg,#1a3a2a,#2d5a3d)", borderRadius: 14, padding: "18px 20px", color: "#fff" }}>
                         <div style={{ fontSize: 11, color: "rgba(255,255,255,.55)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 6 }}>Crop Detected</div>
                         <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Playfair Display',serif" }}>{result.cropName}</div>
-                        {result.severity && (
-                          <div style={{ marginTop: 8 }}>
-                            <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 99, background: (SEVERITY_COLOR[result.severity.toLowerCase()] || SEVERITY_COLOR.medium)[0], color: (SEVERITY_COLOR[result.severity.toLowerCase()] || SEVERITY_COLOR.medium)[1] }}>
+                        
+                        <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          {result.severity && (
+                            <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 99, background: (SEVERITY_COLOR[result.severity.toLowerCase()] || SEVERITY_COLOR.medium)[0], color: (SEVERITY_COLOR[result.severity.toLowerCase()] || SEVERITY_COLOR.medium)[1], border: "1px solid rgba(255,255,255,.1)" }}>
                               {result.severity.toUpperCase()} SEVERITY
                             </span>
-                          </div>
-                        )}
+                          )}
+                          {aiProvider && (
+                            <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 99, background: "rgba(255,255,255,.15)", color: "#fff", border: "1px solid rgba(255,255,255,.2)" }}>
+                              {aiProvider === "gemini-vision" ? "👁 Vision Analysis" : "🧠 Symptom Reasoning"}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       {/* Diagnosis */}
                       <div style={{ background: "#f9f7f4", borderRadius: 12, padding: "16px 18px" }}>
@@ -369,7 +399,7 @@ export default function CropDoctorPage() {
                             <Icon d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" size={14} />
                             Recommended Treatment
                           </div>
-                          <div style={{ fontSize: 13, color: "#166534", lineHeight: 1.6 }}>{result.treatment}</div>
+                          <div style={{ fontSize: 13, color: "#166534", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{result.treatment}</div>
                         </div>
                       )}
                       {/* Status + resolve */}

@@ -64,7 +64,14 @@ export const getAllProducts = async (req, res) => {
 
     if (category) filter.category = category;
     if (type)     filter.type = type;
-    if (status)   filter.status = status;
+
+    // If a specific status is requested, use it; otherwise exclude
+    // "Out of Stock" and "Inactive" products so consumers only see available ones
+    if (status) {
+      filter.status = status;
+    } else {
+      filter.status = { $nin: ["Out of Stock", "Inactive"] };
+    }
 
     // Search by crop name (case-insensitive)
     if (search) {
@@ -248,8 +255,10 @@ export const adminUpdateProductStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    const product = await Product.findByIdAndUpdate(id, { status }, { new: true });
+    const product = await Product.findById(id);
     if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+    product.status = status;
+    await product.save();   // triggers pre-save hook (auto stock↔status sync)
     res.json({ success: true, product });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

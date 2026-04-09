@@ -1,14 +1,18 @@
-import Cerebras from "@cerebras/cerebras_cloud_sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Initialize Cerebras client lazily or with a dummy key so the server doesn't crash on startup
-const getCerebrasClient = () => {
-  return new Cerebras({
-    apiKey: process.env.CEREBRAS_API_KEY || "PLACEHOLDER_KEY", 
-  });
+// Initialize Gemini client lazily
+let _genAI = null;
+const getGeminiClient = () => {
+  if (!_genAI) {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) throw new Error("GEMINI_API_KEY is not set in .env");
+    _genAI = new GoogleGenerativeAI(key);
+  }
+  return _genAI;
 };
 
 /**
- * @desc    Generate an actionable advisory using Cerebras AI
+ * @desc    Generate an actionable advisory using Gemini AI
  * @route   POST /api/advisory
  * @access  Private or Public depending on requirements
  */
@@ -35,7 +39,7 @@ export const generateAdvisory = async (req, res) => {
 
     // Build the prompt based on the user's template
     const prompt = `
-Your task is to analyze crop disease, nutrient levels, and district weather alerts, then provide actionable advice.
+Your task is to analyze crop disease, nutrient levels, and district weather alerts, then provide actionable advice for a Sri Lankan farmer.
 
 Based on the following information, provide a comprehensive advisory:
 
@@ -94,28 +98,19 @@ Please provide a structured response with:
 Keep advice practical, affordable, and specific to Sri Lankan tropical conditions. Use Sinhala or Tamil terms in parentheses where helpful. Assume farmer has basic resources.
 `;
 
-    // Make the API call to Cerebras
-    // using llama3.1-8b as a generally available model, or llama3.1-70b
-    const cerebras = getCerebrasClient();
-    if (cerebras.apiKey === "PLACEHOLDER_KEY") {
-      throw new Error("CEREBRAS_API_KEY is not set in the .env file.");
-    }
-    
-    const response = await cerebras.chat.completions.create({
-      model: "llama3.1-8b",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
-      max_tokens: 1500,
-    });
+    const genAI = getGeminiClient();
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const advisoryText = response.choices[0].message.content;
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const advisoryText = response.text();
 
     return res.status(200).json({
       success: true,
       data: advisoryText,
     });
   } catch (error) {
-    console.error("Error generating advisory from Cerebras AI:", error);
+    console.error("Error generating advisory from Gemini AI:", error);
     return res.status(500).json({
       success: false,
       message: "An error occurred while generating the advisory. Please check your API key and try again.",
@@ -123,3 +118,4 @@ Keep advice practical, affordable, and specific to Sri Lankan tropical condition
     });
   }
 };
+

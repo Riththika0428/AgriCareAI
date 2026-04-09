@@ -8,7 +8,7 @@ const testVision = async () => {
     const cerebras = new Cerebras();
     console.log("Testing Llama 3.2 Vision on Cerebras...");
     const response = await cerebras.chat.completions.create({
-      model: "llama3.2-90b-vision-instruct",
+      model: "llama3.2-11b-vision-instruct",
       messages: [
         {
           role: "user",
