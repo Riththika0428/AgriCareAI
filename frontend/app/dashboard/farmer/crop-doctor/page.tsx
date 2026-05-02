@@ -50,7 +50,9 @@ export default function CropDoctorPage() {
   const [symptoms,      setSymptoms]      = useState("");
   const [toast,         setToast]         = useState("");
   const [drag,          setDrag]          = useState(false);
+  // const [aiProvider,    setAiProvider]    = useState<string | null>(null);
   const [aiProvider,    setAiProvider]    = useState<string | null>(null);
+  const [uploadError,   setUploadError]   = useState<string | null>(null);
 
   const SBW = sideCollapsed ? 68 : 220;
   const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; };
@@ -86,8 +88,29 @@ export default function CropDoctorPage() {
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 3500); };
 
+  // const handleFile = (file: File) => {
+  //   if (file.size > 5 * 1024 * 1024) { showToast("File too large. Max 5MB."); return; }
+  //   setImageFile(file);
+  //   const reader = new FileReader();
+  //   reader.onload = e => setPreview(e.target?.result as string);
+  //   reader.readAsDataURL(file);
+  // };
   const handleFile = (file: File) => {
-    if (file.size > 5 * 1024 * 1024) { showToast("File too large. Max 5MB."); return; }
+    setUploadError(null);
+
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Only image files are allowed (JPG, PNG, WebP).");
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+      setUploadError(`Image is too large (${sizeMB} MB). Please upload under 5 MB.`);
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+
     setImageFile(file);
     const reader = new FileReader();
     reader.onload = e => setPreview(e.target?.result as string);
@@ -303,7 +326,8 @@ export default function CropDoctorPage() {
                         {preview ? (
                           <div style={{ position: "relative" }}>
                             <img src={preview} alt="Preview" style={{ width: "100%", maxHeight: 200, objectFit: "cover" }} />
-                            <button onClick={e => { e.stopPropagation(); setPreview(null); setImageFile(null); }}
+                            {/* <button onClick={e => { e.stopPropagation(); setPreview(null); setImageFile(null); }} */}
+                            <button onClick={e => { e.stopPropagation(); setPreview(null); setImageFile(null); setUploadError(null); }}
                               style={{ position: "absolute", top: 10, right: 10, background: "rgba(0,0,0,.6)", border: "none", width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff" }}>
                               <Icon d="M6 18L18 6M6 6l12 12" size={14} />
                             </button>

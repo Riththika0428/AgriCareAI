@@ -414,7 +414,7 @@ footer { background:#0f1f16;padding:28px 32px;text-align:center; }
 .remember-row input { accent-color:var(--forest);width:16px;height:16px;cursor:pointer; }
 .remember-row label { font-size:13px;color:var(--text-soft);cursor:pointer; }
 
-/* ── Submit button — GREEN like your screenshot ── */
+/* ── Submit button ── */
 .btn-submit {
   width:100%;padding:14px;
   background:var(--forest);

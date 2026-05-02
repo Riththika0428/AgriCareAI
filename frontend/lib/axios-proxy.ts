@@ -34,10 +34,25 @@ api.interceptors.response.use(
  * Wipes all auth state and sends the user to the landing page.
  * Forces a full page reload to clear in-memory state and cache.
  */
+// export function clearAuthAndRedirect(): void {
+//   localStorage.removeItem("agriai_token");
+//   localStorage.removeItem("agriai_user");
+//   // Force a hard reload to the landing page
+//   window.location.href = "/";
+// }
+// export function clearAuthAndRedirect(): void {
+//   localStorage.removeItem("agriai_token");
+//   localStorage.removeItem("agriai_user");
+  
+//   document.cookie = "agriai_user=; path=/; max-age=0";
+  
+//   window.location.href = "/";
+// }
 export function clearAuthAndRedirect(): void {
   localStorage.removeItem("agriai_token");
   localStorage.removeItem("agriai_user");
-  // Force a hard reload to the landing page
+  // Clear the role cookie used by middleware
+  document.cookie = "agriai_user=; path=/; max-age=0";
   window.location.href = "/";
 }
 

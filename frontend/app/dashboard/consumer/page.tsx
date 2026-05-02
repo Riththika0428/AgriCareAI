@@ -34,11 +34,29 @@ export default function ConsumerOverview() {
   const [showPkgs,  setShowPkgs]  = useState(false);
   const [user,      setUser]      = useState<any>(null);
 
+  // useEffect(()=>{
+  //   const stored = localStorage.getItem("agriai_user");
+  //   if(!stored){ router.push("/"); return; }
+  //   setUser(JSON.parse(stored));
+  //   loadAll();
+  // },[]);
   useEffect(()=>{
-    const stored = localStorage.getItem("agriai_user");
-    if(!stored){ router.push("/"); return; }
-    setUser(JSON.parse(stored));
-    loadAll();
+    async function check() {
+      const { validateSession, clearAuthAndRedirect } = await import("@/lib/axios-proxy");
+      const u = await validateSession();
+      if (!u) { clearAuthAndRedirect(); return; }
+     
+      if (u.role !== "consumer" && u.role !== "user") {
+        
+        if (u.role === "farmer")  { router.replace("/dashboard/farmer");  return; }
+        if (u.role === "admin")   { router.replace("/dashboard/admin");   return; }
+        clearAuthAndRedirect();
+        return;
+      }
+      setUser(u);
+      loadAll();
+    }
+    check();
   },[]);
 
   const loadAll = async () => {

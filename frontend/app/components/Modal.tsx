@@ -89,10 +89,22 @@ export default function Modal({ role, onClose }: Props) {
   // ── Helper: save user to localStorage correctly ────────
   // BUG FIX: store token separately from user object,
   // and never store the raw token inside the user object.
+  // const saveSession = (data: any) => {
+  //   const { token, ...userWithoutToken } = data;
+  //   localStorage.setItem("agriai_token", token);
+  //   localStorage.setItem("agriai_user",  JSON.stringify(userWithoutToken));
+  // };
   const saveSession = (data: any) => {
     const { token, ...userWithoutToken } = data;
     localStorage.setItem("agriai_token", token);
     localStorage.setItem("agriai_user",  JSON.stringify(userWithoutToken));
+
+    // Set cookie so Next.js middleware can read the role (localStorage not available server-side)
+    const cookiePayload = encodeURIComponent(JSON.stringify({
+      role: userWithoutToken.role,
+      _id:  userWithoutToken._id,
+    }));
+    document.cookie = `agriai_user=${cookiePayload}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
   };
 
   // ── SIGN IN ────────────────────────────────────────────
